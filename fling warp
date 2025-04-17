@@ -1,0 +1,312 @@
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+
+-- Создание GUI
+local GUI = Instance.new("ScreenGui")
+GUI.Name = "by https://t.me/vomagla"
+GUI.Parent = Player.PlayerGui
+
+-- Главный фрейм
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 300, 0, 200)
+MainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+MainFrame.BackgroundTransparency = 0.5
+MainFrame.BackgroundColor3 = Color3.new(0.2, 0.2, 0.2)
+MainFrame.Visible = false -- Скрыто по умолчанию
+MainFrame.Parent = GUI
+
+-- Закруглённые углы для главного фрейма
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 20)
+UICorner.Parent = MainFrame
+
+-- Заголовок
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, 0, 0, 50)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.TextColor3 = Color3.new(1, 1, 1)
+TitleLabel.TextScaled = true
+TitleLabel.Text = "by https://t.me/vomagla"
+TitleLabel.Parent = MainFrame
+
+-- Поле ввода
+local InputBox = Instance.new("TextBox")
+InputBox.Size = UDim2.new(1, -20, 0, 50)
+InputBox.Position = UDim2.new(0, 10, 0, 60)
+InputBox.BackgroundTransparency = 0.5
+InputBox.BackgroundColor3 = Color3.new(0.4, 0.4, 0.4)
+InputBox.TextColor3 = Color3.new(1, 1, 1)
+InputBox.PlaceholderText = "Введите ник или 'all'"
+InputBox.Parent = MainFrame
+
+-- Кнопка "Флинг"
+local Button = Instance.new("TextButton")
+Button.Size = UDim2.new(1, -20, 0, 50)
+Button.Position = UDim2.new(0, 10, 0, 120)
+Button.BackgroundTransparency = 0.5
+Button.BackgroundColor3 = Color3.new(0.5, 0.5, 0.5)
+Button.TextColor3 = Color3.new(1, 1, 1)
+Button.TextScaled = true
+Button.Text = "Флинг"
+Button.Parent = MainFrame
+
+-- Закруглённые углы для кнопки "Флинг"
+local ButtonCorner = Instance.new("UICorner")
+ButtonCorner.CornerRadius = UDim.new(0, 10)
+ButtonCorner.Parent = Button
+
+-- Кнопка "Открыть"
+local OpenButton = Instance.new("TextButton")
+OpenButton.Size = UDim2.new(0, 100, 0, 30)
+OpenButton.Position = UDim2.new(0.5, -50, -0.1) -- Позиция над главным фреймом
+OpenButton.BackgroundTransparency = 0.5
+OpenButton.BackgroundColor3 = Color3.new(0.5, 0.5, 0.5)
+OpenButton.TextColor3 = Color3.new(1, 1, 1)
+OpenButton.TextScaled = true
+OpenButton.Text = "Открыть"
+OpenButton.Parent = GUI
+
+-- Закруглённые углы для кнопки "Открыть"
+local OpenCorner = Instance.new("UICorner")
+OpenCorner.CornerRadius = UDim.new(0, 10)
+OpenCorner.Parent = OpenButton
+
+-- Кнопка "Закрыть"
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 100, 0, 30)
+CloseButton.Position = UDim2.new(0.5, 50, -0.1) -- Позиция над главным фреймом
+CloseButton.BackgroundTransparency = 0.5
+CloseButton.BackgroundColor3 = Color3.new(0.5, 0.5, 0.5)
+CloseButton.TextColor3 = Color3.new(1, 1, 1)
+CloseButton.TextScaled = true
+CloseButton.Text = "Закрыть"
+CloseButton.Parent = GUI
+
+-- Закруглённые углы для кнопки "Закрыть"
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 10)
+CloseCorner.Parent = CloseButton
+
+-- Функции
+local Targets = {"All"} -- Список целей для флинга
+local AllBool = false
+
+local GetPlayer = function(Name)
+    Name = Name:lower()
+    if Name == "all" then
+        AllBool = true
+        return nil
+    elseif Name == "random" then
+        local playersList = Players:GetPlayers()
+        if table.find(playersList, Player) then table.remove(playersList, table.find(playersList, Player)) end
+        return playersList[math.random(#playersList)]
+    else
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= Player and (player.Name:lower():match("^" .. Name) or player.DisplayName:lower():match("^" .. Name)) then
+                return player
+            end
+        end
+    end
+end
+
+local Message = function(_Title, _Text, Time)
+    game:GetService("StarterGui"):SetCore("SendNotification", {Title = _Title, Text = _Text, Duration = Time})
+end
+
+local SkidFling = function(TargetPlayer)
+    local Character = Player.Character
+    local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+    local RootPart = Humanoid and Humanoid.RootPart
+
+    local TCharacter = TargetPlayer.Character
+    local THumanoid
+    local TRootPart
+    local THead
+    local Accessory
+    local Handle
+
+    if TCharacter:FindFirstChildOfClass("Humanoid") then
+        THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
+    end
+    if THumanoid and THumanoid.RootPart then
+        TRootPart = THumanoid.RootPart
+    end
+    if TCharacter:FindFirstChild("Head") then
+        THead = TCharacter.Head
+    end
+    if TCharacter:FindFirstChildOfClass("Accessory") then
+        Accessory = TCharacter:FindFirstChildOfClass("Accessory")
+    end
+    if Accessory and Accessory:FindFirstChild("Handle") then
+        Handle = Accessory.Handle
+    end
+
+    if Character and Humanoid and RootPart then
+        if RootPart.Velocity.Magnitude < 50 then
+            getgenv().OldPos = RootPart.CFrame
+        end
+        if THumanoid and THumanoid.Sit and not AllBool then
+            return Message("Error Occurred", "Targeting is sitting", 5)
+        end
+        if THead then
+            workspace.CurrentCamera.CameraSubject = THead
+        elseif not THead and Handle then
+            workspace.CurrentCamera.CameraSubject = Handle
+        elseif THumanoid and TRootPart then
+            workspace.CurrentCamera.CameraSubject = THumanoid
+        end
+        if not TCharacter:FindFirstChildWhichIsA("BasePart") then
+            return
+        end
+        
+        local FPos = function(BasePart, Pos, Ang)
+            RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
+            Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
+            RootPart.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+            RootPart.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+        end
+        
+        local SFBasePart = function(BasePart)
+            local TimeToWait = 2
+            local Time = tick()
+            local Angle = 0
+
+            repeat
+                if RootPart and THumanoid then
+                    if BasePart.Velocity.Magnitude < 50 then
+                        Angle = Angle + 100
+
+                        FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle),0 ,0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(2.25, 1.5, -2.25) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(-2.25, -1.5, 2.25) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection,CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection,CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+                    else
+                        FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+                        
+                        FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, -TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(0, 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5 ,0), CFrame.Angles(math.rad(-90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+                        task.wait()
+                    end
+                else
+                    break
+                end
+            until BasePart.Velocity.Magnitude > 500 or BasePart.Parent ~= TargetPlayer.Character or TargetPlayer.Parent ~= Players or not TargetPlayer.Character == TCharacter or THumanoid.Sit or Humanoid.Health <= 0 or tick() > Time + TimeToWait
+        end
+        
+        workspace.FallenPartsDestroyHeight = 0/0
+        
+        local BV = Instance.new("BodyVelocity")
+        BV.Name = "EpixVel"
+        BV.Parent = RootPart
+        BV.Velocity = Vector3.new(9e8, 9e8, 9e8)
+        BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
+        
+        Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+        
+        if TRootPart and THead then
+            if (TRootPart.CFrame.p - THead.CFrame.p).Magnitude > 5 then
+                SFBasePart(THead)
+            else
+                SFBasePart(TRootPart)
+            end
+        elseif TRootPart and not THead then
+            SFBasePart(TRootPart)
+        elseif not TRootPart and THead then
+            SFBasePart(THead)
+        elseif not TRootPart and not THead and Accessory and Handle then
+            SFBasePart(Handle)
+        else
+            return Message("Error Occurred", "Target is missing everything", 5)
+        end
+        
+        BV:Destroy()
+        Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+        workspace.CurrentCamera.CameraSubject = Humanoid
+        
+        repeat
+            RootPart.CFrame = getgenv().OldPos * CFrame.new(0, .5, 0)
+            Character:SetPrimaryPartCFrame(getgenv().OldPos * CFrame.new(0, .5, 0))
+            Humanoid:ChangeState("GettingUp")
+            table.foreach(Character:GetChildren(), function(_, x)
+                if x:IsA("BasePart") then
+                    x.Velocity, x.RotVelocity = Vector3.new(), Vector3.new()
+                end
+            end)
+            task.wait()
+        until (RootPart.Position - getgenv().OldPos.p).Magnitude < 25
+        workspace.FallenPartsDestroyHeight = getgenv().FPDH
+    else
+        return Message("Error Occurred", "Random error", 5)
+    end
+end
+
+-- Обработка кнопок
+OpenButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = true
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+end)
+
+Button.MouseButton1Click:Connect(function()
+    local InputText = InputBox.Text:lower()
+    if InputText == "all" then
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= Player then SkidFling(player) end
+        end
+    else
+        local TargetPlayer = GetPlayer(InputText)
+        if TargetPlayer then SkidFling(TargetPlayer) else Message("Ошибка", "Игрок не найден", 5) end
+    end
+end)
+
+if not getgenv().Welcome then Message("Script by https://t.me/vomagla", "nonka!", 5) end
+getgenv().Welcome = true
+
+-- Удалите автоматический флинг при активации скрипта
+-- if Targets[1] then for _,x in next, Targets do GetPlayer(x) end else return end
+
+-- if AllBool then for _, player in pairs(Players:GetPlayers()) do SkidFling(player) end end
+
+-- for _, targetName in pairs(Targets) do -- Список целей для флинга (можно заменить на конкретные имена)
+--     local TargetPlayer = GetPlayer(targetName)
+--     if TargetPlayer and TargetPlayer ~= Player then SkidFling(TargetPlayer) end
+-- end
