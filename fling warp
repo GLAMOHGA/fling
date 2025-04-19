@@ -1,302 +1,388 @@
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 local RunService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
+local SoundService = game:GetService("SoundService")
 
--- Функция для воспроизведения звука кнопки
-local function PlayClickSound()
-    local sound = Instance.new("Sound")
-    sound.SoundId = "rbxassetid://5852470908"
-    sound.Volume = 2.2
-    sound.Parent = SoundService
-    sound:Play()
-    sound.Ended:Connect(function()
-        sound:Destroy()
-    end)
+-- Анти-Флинг (NoCollisionConstraint)
+local createdConstraints = {}
+local antiFlingEnabled = false
+
+local function createNoCollisionBetweenParts(part1, part2)
+	for _, constraint in pairs(part1:GetChildren()) do
+		if constraint:IsA("NoCollisionConstraint") and constraint.Part1 == part2 then return end
+	end
+	local noCollision = Instance.new("NoCollisionConstraint")
+	noCollision.Part0 = part1
+	noCollision.Part1 = part2
+	noCollision.Parent = part1
+	table.insert(createdConstraints, noCollision)
 end
 
--- Создание GUI
-local GUI = Instance.new("ScreenGui")
-GUI.Name = "by https://t.me/vomagla"
-GUI.Parent = Player.PlayerGui
+local function noCollideWithPlayer(otherPlayer)
+	if not Player.Character or not otherPlayer.Character then return end
+	for _, myPart in pairs(Player.Character:GetChildren()) do
+		if myPart:IsA("BasePart") then
+			for _, otherPart in pairs(otherPlayer.Character:GetChildren()) do
+				if otherPart:IsA("BasePart") then
+					createNoCollisionBetweenParts(myPart, otherPart)
+				end
+			end
+		end
+	end
+end
 
--- Главный фрейм
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 300, 0, 200)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
-MainFrame.BackgroundTransparency = 0.59
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.Visible = false
-MainFrame.Parent = GUI
+local function setupNoCollideForAllPlayers()
+	if not antiFlingEnabled then return end
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= Player then
+			noCollideWithPlayer(p)
+		end
+	end
+end
 
-local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 20)
-UICorner.Parent = MainFrame
+local function clearAllNoCollisionConstraints()
+	for _, c in pairs(createdConstraints) do
+		if c and c.Parent then c:Destroy() end
+	end
+	createdConstraints = {}
+end
 
--- Внешний контур
-local OutlineFrame = Instance.new("Frame")
-OutlineFrame.Size = UDim2.new(1, 8, 1, 8)
-OutlineFrame.Position = UDim2.new(0, -4, 0, -4)
-OutlineFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
-OutlineFrame.BorderSizePixel = 0
-OutlineFrame.BackgroundTransparency = 0.59
-OutlineFrame.Parent = MainFrame
+Players.PlayerAdded:Connect(function(p)
+	p.CharacterAdded:Connect(function()
+		wait(1)
+		if antiFlingEnabled then noCollideWithPlayer(p) end
+	end)
+end)
+
+Player.CharacterAdded:Connect(function()
+	wait(1)
+	if antiFlingEnabled then setupNoCollideForAllPlayers() end
+end)
+
+if Player.Character and antiFlingEnabled then
+	setupNoCollideForAllPlayers()
+end
+
+-- Изменение скорости
+local function SetSpeed(speed)
+	local char = Player.Character or Player.CharacterAdded:Wait()
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.WalkSpeed = speed
+		Player.CharacterAdded:Connect(function(newChar)
+			newChar:WaitForChild("Humanoid").WalkSpeed = speed
+		end)
+		return true
+	end
+	return false
+end
+
+local function PlayClickSound()
+	local s = Instance.new("Sound", SoundService)
+	s.SoundId = "rbxassetid://5852470908"
+	s.Volume = 2.2
+	s:Play()
+	s.Ended:Connect(function() s:Destroy() end)
+end
+
+local function CreateUICorner(parent, radius)
+	local c = Instance.new("UICorner", parent)
+	c.CornerRadius = UDim.new(0, radius)
+	return c
+end
+
+local function CreateButton(props)
+	local btn = Instance.new("TextButton")
+	for k,v in pairs(props) do btn[k] = v end
+	CreateUICorner(btn,10)
+	return btn
+end
+
+local function CreateLabel(props)
+	local lbl = Instance.new("TextLabel")
+	for k,v in pairs(props) do lbl[k] = v end
+	return lbl
+end
+
+local function CreateFrame(props)
+	local f = Instance.new("Frame")
+	for k,v in pairs(props) do f[k] = v end
+	CreateUICorner(f,20)
+	return f
+end
+
+-- GUI и элементы
+local GUI = Instance.new("ScreenGui", Player.PlayerGui)
+GUI.Name = "CustomGUI"
+
+local MainFrame = CreateFrame{
+	Size = UDim2.new(0,300,0,200),
+	Position = UDim2.new(0.5,-150,0.5,-100),
+	BackgroundColor3 = Color3.fromRGB(20,20,20),
+	Visible = false,
+	Parent = GUI
+}
+
+local OutlineFrame = CreateFrame{
+	Size = UDim2.new(1,8,1,8),
+	Position = UDim2.new(0,-4,0,-4),
+	BackgroundColor3 = Color3.fromRGB(80,80,80),
+	BorderSizePixel = 0,
+	Parent = MainFrame
+}
 OutlineFrame.ZIndex = MainFrame.ZIndex - 1
 
-local OutlineCorner = Instance.new("UICorner")
-OutlineCorner.CornerRadius = UDim.new(0, 20)
-OutlineCorner.Parent = OutlineFrame
+CreateLabel{
+	Size = UDim2.new(1,0,0,50),
+	BackgroundTransparency = 1,
+	TextColor3 = Color3.fromRGB(220,220,220),
+	TextScaled = true,
+	Text = "by https://t.me/vomagla",
+	Parent = MainFrame
+}
 
--- Заголовок
-local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, 0, 0, 50)
-TitleLabel.BackgroundTransparency = 1
-TitleLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-TitleLabel.TextScaled = true
-TitleLabel.Text = "by https://t.me/vomagla"
-TitleLabel.Parent = MainFrame
-
--- Поле ввода
-local InputBox = Instance.new("TextBox")
-InputBox.Size = UDim2.new(1, -20, 0, 50)
-InputBox.Position = UDim2.new(0, 10, 0, 60)
-InputBox.BackgroundTransparency = 0.59
-InputBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-InputBox.TextColor3 = Color3.fromRGB(200, 200, 200)
-InputBox.PlaceholderColor3 = Color3.fromRGB(200, 200, 200)
+local InputBox = Instance.new("TextBox", MainFrame)
+InputBox.Size = UDim2.new(1,-20,0,50)
+InputBox.Position = UDim2.new(0,10,0,60)
+InputBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
+InputBox.TextColor3 = Color3.fromRGB(230,230,230)
+InputBox.PlaceholderColor3 = Color3.fromRGB(180,180,180)
 InputBox.PlaceholderText = "Введите ник или 'all'"
-InputBox.Parent = MainFrame
+CreateUICorner(InputBox,10)
 
--- Кнопка "Флинг"
-local Button = Instance.new("TextButton")
-Button.Size = UDim2.new(1, -20, 0, 50)
-Button.Position = UDim2.new(0, 10, 0, 120)
-Button.BackgroundTransparency = 0.59
-Button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Button.TextColor3 = Color3.fromRGB(200, 200, 200)
-Button.TextScaled = true
-Button.Text = "Флинг"
-Button.Parent = MainFrame
+local FlingButton = CreateButton{
+	Size = UDim2.new(1,-20,0,50),
+	Position = UDim2.new(0,10,0,120),
+	BackgroundColor3 = Color3.fromRGB(40,40,40),
+	TextColor3 = Color3.fromRGB(220,220,220),
+	TextScaled = true,
+	Text = "Флинг",
+	Parent = MainFrame
+}
 
-local ButtonCorner = Instance.new("UICorner")
-ButtonCorner.CornerRadius = UDim.new(0, 10)
-ButtonCorner.Parent = Button
+local SecondFrame = CreateFrame{
+	Size = UDim2.new(0,300,0,180),
+	Position = UDim2.new(1,10,0.5,-90),
+	BackgroundColor3 = Color3.fromRGB(20,20,20),
+	Visible = false,
+	Parent = GUI
+}
 
--- Кнопка "Открыть"
-local OpenButton = Instance.new("TextButton")
-OpenButton.Size = UDim2.new(0, 100, 0, 30)
-OpenButton.Position = UDim2.new(0.5, -50, -0.1)
-OpenButton.BackgroundTransparency = 0.59
-OpenButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-OpenButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-OpenButton.TextScaled = true
-OpenButton.Text = "Открыть"
-OpenButton.Parent = GUI
+CreateLabel{
+	Size = UDim2.new(0,80,0,30),
+	Position = UDim2.new(0,10,0,20),
+	BackgroundTransparency = 1,
+	TextColor3 = Color3.fromRGB(220,220,220),
+	TextScaled = true,
+	Text = "Скорость:",
+	TextXAlignment = Enum.TextXAlignment.Left,
+	Parent = SecondFrame
+}
 
-local OpenCorner = Instance.new("UICorner")
-OpenCorner.CornerRadius = UDim.new(0, 10)
-OpenCorner.Parent = OpenButton
+local SpeedInput = Instance.new("TextBox", SecondFrame)
+SpeedInput.Size = UDim2.new(0,150,0,30)
+SpeedInput.Position = UDim2.new(0,100,0,20)
+SpeedInput.BackgroundColor3 = Color3.fromRGB(40,40,40)
+SpeedInput.TextColor3 = Color3.fromRGB(230,230,230)
+SpeedInput.PlaceholderColor3 = Color3.fromRGB(180,180,180)
+SpeedInput.PlaceholderText = "Введите число"
+CreateUICorner(SpeedInput,10)
 
--- Кнопка "Закрыть"
-local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0, 100, 0, 30)
-CloseButton.Position = UDim2.new(0.5, 50, -0.1)
-CloseButton.BackgroundTransparency = 0.59
-CloseButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-CloseButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-CloseButton.TextScaled = true
-CloseButton.Text = "Закрыть"
-CloseButton.Parent = GUI
+local ApplySpeedButton = CreateButton{
+	Size = UDim2.new(0,120,0,30),
+	Position = UDim2.new(0,175,0,70),
+	BackgroundColor3 = Color3.fromRGB(40,40,40),
+	TextColor3 = Color3.fromRGB(220,220,220),
+	TextScaled = true,
+	Text = "Применить скорость",
+	Parent = SecondFrame
+}
 
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 10)
-CloseCorner.Parent = CloseButton
+local AntiFlingButton = CreateButton{
+	Size = UDim2.new(0,120,0,30),
+	Position = UDim2.new(0, 10, 0, 70), -- слева по краю рамки
+	BackgroundColor3 = Color3.fromRGB(40,40,40),
+	TextColor3 = Color3.fromRGB(220,220,220),
+	TextScaled = true,
+	Text = "Анти Флинг: ВЫКЛ",
+	Parent = SecondFrame
+}
 
--- Окно ошибки (правый нижний угол)
-local ErrorFrame = Instance.new("Frame")
-ErrorFrame.Size = UDim2.new(0, 250, 0, 100)
-ErrorFrame.Position = UDim2.new(1, 250, 1, -110) -- Начальная позиция справа за экраном
-ErrorFrame.BackgroundTransparency = 0.59
-ErrorFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-ErrorFrame.Visible = false
-ErrorFrame.Parent = GUI
+AntiFlingButton.MouseButton1Click:Connect(function()
+	PlayClickSound()
+	antiFlingEnabled = not antiFlingEnabled
+	if antiFlingEnabled then
+		AntiFlingButton.Text = "Анти Флинг: ВКЛ"
+		setupNoCollideForAllPlayers()
+	else
+		AntiFlingButton.Text = "Анти Флинг: ВЫКЛ"
+		clearAllNoCollisionConstraints()
+	end
+end)
 
-local ErrorCorner = Instance.new("UICorner")
-ErrorCorner.CornerRadius = UDim.new(0, 20)
-ErrorCorner.Parent = ErrorFrame
+local OpenButton = CreateButton{
+	Size = UDim2.new(0,100,0,30),
+	Position = UDim2.new(0.5,-50,-0.1),
+	BackgroundColor3 = Color3.fromRGB(40,40,40),
+	TextColor3 = Color3.fromRGB(220,220,220),
+	TextScaled = true,
+	Text = "Открыть",
+	Parent = GUI
+}
 
-local ErrorOutline = Instance.new("Frame")
-ErrorOutline.Size = UDim2.new(1, 8, 1, 8)
-ErrorOutline.Position = UDim2.new(0, -4, 0, -4)
-ErrorOutline.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
-ErrorOutline.BorderSizePixel = 0
-ErrorOutline.BackgroundTransparency = 0.59
-ErrorOutline.Parent = ErrorFrame
-ErrorOutline.ZIndex = ErrorFrame.ZIndex - 1
+local CloseButton = CreateButton{
+	Size = UDim2.new(0,100,0,30),
+	Position = UDim2.new(0.5,50,-0.1),
+	BackgroundColor3 = Color3.fromRGB(40,40,40),
+	TextColor3 = Color3.fromRGB(220,220,220),
+	TextScaled = true,
+	Text = "Закрыть",
+	Parent = GUI
+}
 
-local ErrorOutlineCorner = Instance.new("UICorner")
-ErrorOutlineCorner.CornerRadius = UDim.new(0, 20)
-ErrorOutlineCorner.Parent = ErrorOutline
+local SwitchButton = CreateButton{
+	Size = UDim2.new(0,80,0,30),
+	Position = UDim2.new(0.5,150,0.5,-15),
+	BackgroundColor3 = Color3.fromRGB(40,40,40),
+	TextColor3 = Color3.fromRGB(220,220,220),
+	TextScaled = true,
+	Text = "Другое",
+	Parent = GUI,
+	Visible = false
+}
 
-local ErrorLabel = Instance.new("TextLabel")
-ErrorLabel.Size = UDim2.new(1, -20, 1, -20)
-ErrorLabel.Position = UDim2.new(0, 10, 0, 10)
-ErrorLabel.BackgroundTransparency = 1
-ErrorLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-ErrorLabel.TextScaled = true
-ErrorLabel.TextWrapped = true
-ErrorLabel.Text = ""
-ErrorLabel.Parent = ErrorFrame
+local BackButton = CreateButton{
+	Size = UDim2.new(0,80,0,30),
+	Position = SwitchButton.Position,
+	BackgroundColor3 = Color3.fromRGB(40,40,40),
+	TextColor3 = Color3.fromRGB(220,220,220),
+	TextScaled = true,
+	Text = "Назад",
+	Parent = GUI,
+	Visible = false
+}
 
--- Анимация появления ошибки справа снизу
-local function AnimateErrorIn()
-    ErrorFrame.Position = UDim2.new(1, 250, 1, -110)
-    ErrorFrame.Visible = true
-    local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    local goal = {Position = UDim2.new(1, -260, 1, -110)}
-    local tween = TweenService:Create(ErrorFrame, tweenInfo, goal)
-    tween:Play()
-end
-
--- Анимация скрытия ошибки вправо за экран
-local function AnimateErrorOut()
-    local tweenInfo = TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-    local goal = {Position = UDim2.new(1, 250, 1, -110)}
-    local tween = TweenService:Create(ErrorFrame, tweenInfo, goal)
-    tween:Play()
-    tween.Completed:Connect(function()
-        ErrorFrame.Visible = false
-    end)
-end
-
--- Функция показа сообщения с анимацией
-local function Message(_Title, _Text, Time)
-    ErrorLabel.Text = _Title.."\n".._Text
-    AnimateErrorIn()
-    task.delay(Time or 5, AnimateErrorOut)
-end
-
--- Функции и переменные для работы скрипта (GetPlayer, SkidFling, обработка кнопок)
--- ... (вставьте сюда ваш существующий код функций и логики)
-
--- Обработка кнопок с проигрыванием звука и вызовом Message
 OpenButton.MouseButton1Click:Connect(function()
-    PlayClickSound()
-    MainFrame.Visible = true
+	PlayClickSound()
+	MainFrame.Visible = true
+	MainFrame.Position = UDim2.new(0.5,-150,0.5,-100)
+	SecondFrame.Visible = false
+	SwitchButton.Visible = true
+	BackButton.Visible = false
 end)
 
 CloseButton.MouseButton1Click:Connect(function()
-    PlayClickSound()
-    MainFrame.Visible = false
+	PlayClickSound()
+	MainFrame.Visible = false
+	SecondFrame.Visible = false
+	SwitchButton.Visible = false
+	BackButton.Visible = false
 end)
 
-Button.MouseButton1Click:Connect(function()
-    PlayClickSound()
-    local InputText = InputBox.Text:lower()
-    if InputText == "all" then
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= Player then
-                -- Вызов вашей функции SkidFling(player)
-            end
-        end
-    else
-        local TargetPlayer = GetPlayer(InputText)
-        if TargetPlayer then
-            -- Вызов вашей функции SkidFling(TargetPlayer)
-        else
-            Message("Ошибка", "Игрок не найден", 5)
-        end
-    end
+SwitchButton.MouseButton1Click:Connect(function()
+	PlayClickSound()
+	TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {Position=UDim2.new(1,10,0.5,-100)}):Play()
+	TweenService:Create(SecondFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {Position=UDim2.new(0.5,-150,0.5,-90)}):Play()
+	wait(0.6)
+	MainFrame.Visible = false
+	SecondFrame.Visible = true
+	SwitchButton.Visible = false
+	BackButton.Visible = true
 end)
 
-if not getgenv().Welcome then Message("Script by https://t.me/vomagla", "nonka!", 5) end
-getgenv().Welcome = true
+BackButton.MouseButton1Click:Connect(function()
+	PlayClickSound()
+	TweenService:Create(SecondFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {Position=UDim2.new(1,10,0.5,-100)}):Play()
+	TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {Position=UDim2.new(0.5,-150,0.5,-100)}):Play()
+	wait(0.6)
+	SecondFrame.Visible = false
+	MainFrame.Visible = true
+	BackButton.Visible = false
+	SwitchButton.Visible = true
+end)
 
--- Переливание цветов меню
+local function GetPlayer(name)
+	name = name:lower()
+	for _,p in pairs(Players:GetPlayers()) do
+		if p.Name:lower():find(name) then
+			return p
+		end
+	end
+	return nil
+end
+
+FlingButton.MouseButton1Click:Connect(function()
+	PlayClickSound()
+	local input = InputBox.Text:lower()
+	if input == "all" then
+		for _, p in pairs(Players:GetPlayers()) do
+			if p ~= Player then
+				-- Ваш код флинга
+			end
+		end
+	else
+		local target = GetPlayer(input)
+		if target then
+			-- Ваш код флинга
+		else
+			warn("Игрок не найден")
+		end
+	end
+end)
+
+ApplySpeedButton.MouseButton1Click:Connect(function()
+	PlayClickSound()
+	local speed = tonumber(SpeedInput.Text)
+	if speed and speed > 0 then
+		if SetSpeed(speed) then
+			print("Скорость установлена: "..speed)
+		else
+			warn("Персонаж или Humanoid не найден")
+		end
+	else
+		warn("Введите корректное число скорости")
+	end
+end)
+-- (Весь предыдущий код без изменений, только добавляем анимацию ниже)
+
+-- Цвета для плавного перелива фона меню
 local bgColors = {
-    Color3.fromRGB(30, 30, 30),    -- тёмно-серый
-    Color3.fromRGB(0, 0, 0),       -- чёрный
-    Color3.fromRGB(200, 200, 200), -- светло-серый
-    Color3.fromRGB(255, 182, 193), -- бледно-розовый
+	Color3.fromRGB(20, 20, 20),    -- тёмно-чёрный
+	Color3.fromRGB(180, 180, 180), -- светло-серый
+	Color3.fromRGB(230, 230, 230)  -- чуть затемнённый белый
 }
 
-local textColors = {
-    Color3.fromRGB(200, 200, 200),
-    Color3.fromRGB(255, 182, 193),
-    Color3.fromRGB(30, 30, 30),
-    Color3.fromRGB(0, 0, 0),
-}
-
-local outlineColors = {
-    Color3.fromRGB(0, 0, 255),
-    Color3.fromRGB(255, 255, 255),
-    Color3.fromRGB(255, 105, 180),
-}
-
-local bgIndex, bgNextIndex = 1, 2
-local bgLerpAlpha = 0
-local bgLerpSpeed = 0.001
-
-local textIndex, textNextIndex = 1, 2
-local textLerpAlpha = 0
-local textLerpSpeed = 0.001
-
-local outlineIndex, outlineNextIndex = 1, 2
-local outlineLerpAlpha = 0
-local outlineLerpSpeed = 0.005
+local bgIndex, bgAlpha = 1, 0
 
 local function LerpColor(a, b, t)
-    return Color3.new(
-        a.R + (b.R - a.R) * t,
-        a.G + (b.G - a.G) * t,
-        a.B + (b.B - a.B) * t
-    )
+	return Color3.new(
+		a.R + (b.R - a.R) * t,
+		a.G + (b.G - a.G) * t,
+		a.B + (b.B - a.B) * t
+	)
+end
+
+local function CycleColors(colors, index, alpha, speed)
+	alpha = alpha + speed
+	if alpha >= 1 then
+		alpha = 0
+		index = index + 1
+		if index > #colors then index = 1 end
+	end
+	local nextIndex = index + 1
+	if nextIndex > #colors then nextIndex = 1 end
+	return LerpColor(colors[index], colors[nextIndex], alpha), index, alpha
 end
 
 RunService.RenderStepped:Connect(function()
-    -- Фон
-    bgLerpAlpha = bgLerpAlpha + bgLerpSpeed
-    if bgLerpAlpha >= 1 then
-        bgLerpAlpha = 0
-        bgIndex = bgNextIndex
-        bgNextIndex = bgNextIndex + 1
-        if bgNextIndex > #bgColors then bgNextIndex = 1 end
-    end
-    local currentBg = LerpColor(bgColors[bgIndex], bgColors[bgNextIndex], bgLerpAlpha)
-    MainFrame.BackgroundColor3 = currentBg
-    InputBox.BackgroundColor3 = currentBg
-    Button.BackgroundColor3 = currentBg
-    OpenButton.BackgroundColor3 = currentBg
-    CloseButton.BackgroundColor3 = currentBg
-    ErrorFrame.BackgroundColor3 = currentBg
+	local bgColor
+	bgColor, bgIndex, bgAlpha = CycleColors(bgColors, bgIndex, bgAlpha, 0.0015)
 
-    -- Текст
-    textLerpAlpha = textLerpAlpha + textLerpSpeed
-    if textLerpAlpha >= 1 then
-        textLerpAlpha = 0
-        textIndex = textNextIndex
-        textNextIndex = textNextIndex + 1
-        if textNextIndex > #textColors then textNextIndex = 1 end
-    end
-    local currentText = LerpColor(textColors[textIndex], textColors[textNextIndex], textLerpAlpha)
-    TitleLabel.TextColor3 = currentText
-    InputBox.TextColor3 = currentText
-    InputBox.PlaceholderColor3 = currentText
-    Button.TextColor3 = currentText
-    OpenButton.TextColor3 = currentText
-    CloseButton.TextColor3 = currentText
-    ErrorLabel.TextColor3 = currentText
+	-- Применяем цвет только к фонам меню
+	MainFrame.BackgroundColor3 = bgColor
+	SecondFrame.BackgroundColor3 = bgColor
+	OutlineFrame.BackgroundColor3 = bgColor:Lerp(Color3.fromRGB(80,80,80), 0.5) -- Немного светлее для обводки
 
-    -- Контур
-    outlineLerpAlpha = outlineLerpAlpha + outlineLerpSpeed
-    if outlineLerpAlpha >= 1 then
-        outlineLerpAlpha = 0
-        outlineIndex = outlineNextIndex
-        outlineNextIndex = outlineNextIndex + 1
-        if outlineNextIndex > #outlineColors then outlineNextIndex = 1 end
-    end
-    local currentOutline = LerpColor(outlineColors[outlineIndex], outlineColors[outlineNextIndex], outlineLerpAlpha)
-    OutlineFrame.BackgroundColor3 = currentOutline
-    ErrorOutline.BackgroundColor3 = currentOutline
+	-- Остальные элементы (текст, кнопки) не меняют цвет
 end)
