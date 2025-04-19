@@ -391,7 +391,7 @@ task.wait(0.1) -- Даем GUI время загрузиться
 for _, obj in pairs(GUI:GetDescendants()) do
     -- Максимальная прозрачность для ВСЕХ элементов
     if obj:IsA("GuiObject") then
-        obj.BackgroundTransparency = 1 -- 100% прозрачность фона
+        obj.BackgroundTransparency = 0.6 -- 100% прозрачность фона
         obj.BorderSizePixel = 0 -- Убираем границы
     end
 
