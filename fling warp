@@ -386,22 +386,30 @@ RunService.RenderStepped:Connect(function()
 
 	-- Остальные элементы (текст, кнопки) не меняют цвет
 end)
-task.wait(0.1) -- Ждем загрузку GUI
+task.wait(0.1) -- Даем GUI время загрузиться
 
-for _, guiObject in pairs(GUI:GetDescendants()) do
-    -- Прозрачность фона (42%)
-    if guiObject:IsA("GuiObject") then
-        guiObject.BackgroundTransparency = 0.58
-        
-        -- Прозрачность текста (42%)
-        if guiObject:IsA("TextLabel") or guiObject:IsA("TextButton") or guiObject:IsA("TextBox") then
-            guiObject.TextTransparency = 0.42
-            guiObject.TextStrokeTransparency = 0.42 -- Если есть обводка текста
+for _, obj in pairs(GUI:GetDescendants()) do
+    -- Максимальная прозрачность для ВСЕХ элементов
+    if obj:IsA("GuiObject") then
+        obj.BackgroundTransparency = 1 -- 100% прозрачность фона
+        obj.BorderSizePixel = 0 -- Убираем границы
+    end
+
+    -- Текст и текстовая обводка
+    if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+        obj.TextTransparency = 1 -- 100% прозрачность текста
+        if obj:FindFirstChild("TextStrokeColor3") then
+            obj.TextStrokeTransparency = 1 -- Убираем обводку текста
         end
     end
+
+    -- Удаление ВСЕХ скруглений
+    if obj:IsA("UICorner") then
+        obj:Destroy()
+    end
     
-    -- Удаляем все скругления (UICorner)
-    if guiObject:IsA("UICorner") then
-        guiObject:Destroy()
+    -- Удаление других декоративных элементов (по желанию)
+    if obj:IsA("UIStroke") then
+        obj.Thickness = 0 -- Убираем обводку элементов
     end
 end
