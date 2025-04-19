@@ -386,17 +386,30 @@ RunService.RenderStepped:Connect(function()
 
 	-- Остальные элементы (текст, кнопки) не меняют цвет
 end)
-task.wait(0.1) -- Даем GUI время загрузиться
-
-for _, obj in pairs(GUI:GetDescendants()) do
-    -- 50% прозрачности фона
-    if obj:IsA("GuiObject") then
-        obj.BackgroundTransparency = 0.5
-        obj.BorderSizePixel = 0 -- Убираем границы (опционально)
+local function setTransparency(obj, transparency)
+    if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("ImageButton") then
+        obj.TextTransparency = transparency
+        obj.BackgroundTransparency = transparency
+    end
+    
+    if obj:IsA("Frame") or obj:IsA("ScrollingFrame") or obj:IsA("ImageLabel") then
+        obj.BackgroundTransparency = transparency
     end
 
-    -- 50% прозрачности текста
-    if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-        obj.TextTransparency = 0.5
-        obj.TextStrokeTransparency = 0.5 -- Убираем обводку текста
-    end 
+    for _, child in pairs(obj:GetChildren()) do
+        setTransparency(child, transparency)
+    end
+
+    if obj:IsA("UICorner") then
+        obj.CornerRadius = UDim.new(0, 0) -- Установите значение радиуса по вашему усмотрению
+        obj.BackgroundTransparency = transparency
+    end
+end
+
+-- Применяем прозрачность ко всем элементам User Interface
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+for _, gui in pairs(playerGui:GetChildren()) do
+    setTransparency(gui, 0.5)
+end
