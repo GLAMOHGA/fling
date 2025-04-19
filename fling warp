@@ -1,429 +1,375 @@
-local Players = game:GetService("Players")
-local Player = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local SoundService = game:GetService("SoundService")
-local TweenService = game:GetService("TweenService")
+local Players=game:GetService("Players")
+local Player=Players.LocalPlayer
+local RunService=game:GetService("RunService")
+local SoundService=game:GetService("SoundService")
+local TweenService=game:GetService("TweenService")
 
-local function playClick()
-    local s = Instance.new("Sound")
-    s.SoundId = "rbxassetid://5852470908"
-    s.Volume = 2.2
-    s.Parent = SoundService
-    s:Play()
-    s.Ended:Connect(function() s:Destroy() end)
+local function PlayClickSound()
+    local sound=Instance.new("Sound")
+    sound.SoundId="rbxassetid://5852470908"
+    sound.Volume=2.2
+    sound.Parent=SoundService
+    sound:Play()
+    sound.Ended:Connect(function() sound:Destroy() end)
 end
 
-local GUI = Instance.new("ScreenGui", Player.PlayerGui)
-GUI.Name = "by https://t.me/vomagla"
+local GUI=Instance.new("ScreenGui")
+GUI.Name="by https://t.me/vomagla"
+GUI.Parent=Player.PlayerGui
 
-local function createUICorner(parent, radius)
-    local c = Instance.new("UICorner", parent)
-    c.CornerRadius = UDim.new(0, radius)
-    return c
-end
+local function CreateUICorner(parent, radius) local c=Instance.new("UICorner",parent) c.CornerRadius=UDim.new(0,radius) return c end
 
--- Главное меню
-local MainFrame = Instance.new("Frame", GUI)
-MainFrame.Size = UDim2.new(0, 300, 0, 200)
-MainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.BackgroundTransparency = 0.59
-MainFrame.Visible = false
-createUICorner(MainFrame, 20)
+local MainFrame=Instance.new("Frame")
+MainFrame.Size=UDim2.new(0,300,0,200)
+MainFrame.Position=UDim2.new(0.5,-150,0.5,-100)
+MainFrame.BackgroundTransparency=0.59
+MainFrame.BackgroundColor3=Color3.fromRGB(30,30,30)
+MainFrame.Visible=false
+MainFrame.Parent=GUI
+CreateUICorner(MainFrame,20)
 
-local InputBox = Instance.new("TextBox", MainFrame)
-InputBox.Size = UDim2.new(1, -20, 0, 50)
-InputBox.Position = UDim2.new(0, 10, 0, 60)
-InputBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-InputBox.BackgroundTransparency = 0.59
-InputBox.TextColor3 = Color3.fromRGB(200, 200, 200)
-InputBox.PlaceholderColor3 = Color3.fromRGB(200, 200, 200)
-InputBox.PlaceholderText = "Введите ник или 'all'"
+local OutlineFrame=Instance.new("Frame")
+OutlineFrame.Size=UDim2.new(1,8,1,8)
+OutlineFrame.Position=UDim2.new(0,-4,0,-4)
+OutlineFrame.BackgroundColor3=Color3.fromRGB(0,0,255)
+OutlineFrame.BorderSizePixel=0
+OutlineFrame.BackgroundTransparency=0.59
+OutlineFrame.Parent=MainFrame
+OutlineFrame.ZIndex=MainFrame.ZIndex-1
+CreateUICorner(OutlineFrame,20)
 
-local FlingButton = Instance.new("TextButton", MainFrame)
-FlingButton.Size = UDim2.new(1, -20, 0, 40)
-FlingButton.Position = UDim2.new(0, 10, 0, 120)
-FlingButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-FlingButton.BackgroundTransparency = 0.59
-FlingButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-FlingButton.TextScaled = true
-FlingButton.Text = "Флинг"
-createUICorner(FlingButton, 10)
+local TitleLabel=Instance.new("TextLabel")
+TitleLabel.Size=UDim2.new(1,0,0,50)
+TitleLabel.BackgroundTransparency=1
+TitleLabel.TextColor3=Color3.fromRGB(200,200,200)
+TitleLabel.TextScaled=true
+TitleLabel.Text="by https://t.me/vomagla"
+TitleLabel.Parent=MainFrame
 
--- Кнопки переключения меню
-local SwitchButton = Instance.new("TextButton", GUI)
-SwitchButton.Size = UDim2.new(0, 80, 0, 30)
-SwitchButton.Position = UDim2.new(0.5, 160, 0.5, -15)
-SwitchButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-SwitchButton.BackgroundTransparency = 0.59
-SwitchButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-SwitchButton.TextScaled = true
-SwitchButton.Text = "Другое"
-createUICorner(SwitchButton, 10)
+local InputBox=Instance.new("TextBox")
+InputBox.Size=UDim2.new(1,-20,0,50)
+InputBox.Position=UDim2.new(0,10,0,60)
+InputBox.BackgroundTransparency=0.59
+InputBox.BackgroundColor3=Color3.fromRGB(30,30,30)
+InputBox.TextColor3=Color3.fromRGB(200,200,200)
+InputBox.PlaceholderColor3=Color3.fromRGB(200,200,200)
+InputBox.PlaceholderText="Введите ник или 'all'"
+InputBox.Parent=MainFrame
 
-local BackButton = Instance.new("TextButton", GUI)
-BackButton.Size = SwitchButton.Size
-BackButton.Position = SwitchButton.Position
-BackButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-BackButton.BackgroundTransparency = 0.59
-BackButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-BackButton.TextScaled = true
-BackButton.Text = "Назад"
-BackButton.Visible = false
-createUICorner(BackButton, 10)
+local Button=Instance.new("TextButton")
+Button.Size=UDim2.new(1,-20,0,50)
+Button.Position=UDim2.new(0,10,0,120)
+Button.BackgroundTransparency=0.59
+Button.BackgroundColor3=Color3.fromRGB(30,30,30)
+Button.TextColor3=Color3.fromRGB(200,200,200)
+Button.TextScaled=true
+Button.Text="Флинг"
+Button.Parent=MainFrame
+CreateUICorner(Button,10)
 
--- Второе меню
-local SecondFrame = Instance.new("Frame", GUI)
-SecondFrame.Size = MainFrame.Size
-SecondFrame.Position = UDim2.new(1, 10, 0.5, -100)
-SecondFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-SecondFrame.BackgroundTransparency = 0.59
-SecondFrame.Visible = false
-createUICorner(SecondFrame, 20)
+local OpenButton=Instance.new("TextButton")
+OpenButton.Size=UDim2.new(0,100,0,30)
+OpenButton.Position=UDim2.new(0.5,-50,-0.1)
+OpenButton.BackgroundTransparency=0.59
+OpenButton.BackgroundColor3=Color3.fromRGB(30,30,30)
+OpenButton.TextColor3=Color3.fromRGB(200,200,200)
+OpenButton.TextScaled=true
+OpenButton.Text="Открыть"
+OpenButton.Parent=GUI
+CreateUICorner(OpenButton,10)
 
-local SpeedLabel = Instance.new("TextLabel", SecondFrame)
-SpeedLabel.Size = UDim2.new(1, -20, 0, 20)
-SpeedLabel.Position = UDim2.new(0, 10, 0, 20)
-SpeedLabel.BackgroundTransparency = 1
-SpeedLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-SpeedLabel.Text = "Введите скорость:"
-SpeedLabel.TextXAlignment = Enum.TextXAlignment.Left
+local CloseButton=Instance.new("TextButton")
+CloseButton.Size=UDim2.new(0,100,0,30)
+CloseButton.Position=UDim2.new(0.5,50,-0.1)
+CloseButton.BackgroundTransparency=0.59
+CloseButton.BackgroundColor3=Color3.fromRGB(30,30,30)
+CloseButton.TextColor3=Color3.fromRGB(200,200,200)
+CloseButton.TextScaled=true
+CloseButton.Text="Закрыть"
+CloseButton.Parent=GUI
+CreateUICorner(CloseButton,10)
 
-local SpeedInput = Instance.new("TextBox", SecondFrame)
-SpeedInput.Size = UDim2.new(1, -20, 0, 30)
-SpeedInput.Position = UDim2.new(0, 10, 0, 50)
-SpeedInput.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-SpeedInput.BackgroundTransparency = 0.59
-SpeedInput.TextColor3 = Color3.fromRGB(200, 200, 200)
-SpeedInput.PlaceholderColor3 = Color3.fromRGB(200, 200, 200)
-SpeedInput.PlaceholderText = "Скорость (число)"
+-- Кнопка переключения меню справа по центру экрана, чуть правее контура
+local SwitchButton=Instance.new("TextButton")
+SwitchButton.Size=UDim2.new(0,80,0,30)
+SwitchButton.Position=UDim2.new(0.5,150,0.5,-15) -- по вертикали центр, по горизонтали справа от MainFrame (300/2=150)
+SwitchButton.BackgroundTransparency=0.59
+SwitchButton.BackgroundColor3=Color3.fromRGB(30,30,30)
+SwitchButton.TextColor3=Color3.fromRGB(200,200,200)
+SwitchButton.TextScaled=true
+SwitchButton.Text="Другое"
+SwitchButton.Parent=GUI
+CreateUICorner(SwitchButton,10)
 
-local ApplySpeedButton = Instance.new("TextButton", SecondFrame)
-ApplySpeedButton.Size = UDim2.new(0, 130, 0, 30)
-ApplySpeedButton.Position = UDim2.new(0, 10, 0, 90)
-ApplySpeedButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-ApplySpeedButton.BackgroundTransparency = 0.59
-ApplySpeedButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-ApplySpeedButton.TextScaled = true
-ApplySpeedButton.Text = "Применить скорость"
-createUICorner(ApplySpeedButton, 10)
+local SecondFrame=Instance.new("Frame")
+SecondFrame.Size=UDim2.new(0,300,0,200)
+SecondFrame.Position=UDim2.new(1,10,0.5,-100)
+SecondFrame.BackgroundTransparency=0.59
+SecondFrame.BackgroundColor3=Color3.fromRGB(40,40,40)
+SecondFrame.Visible=false
+SecondFrame.Parent=GUI
+CreateUICorner(SecondFrame,20)
 
-local SecondBackButton = Instance.new("TextButton", SecondFrame)
-SecondBackButton.Size = UDim2.new(0, 100, 0, 30)
-SecondBackButton.Position = UDim2.new(0.5, -50, 1, -30)
-SecondBackButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-SecondBackButton.BackgroundTransparency = 0.59
-SecondBackButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-SecondBackButton.TextScaled = true
-SecondBackButton.Text = "Назад"
-createUICorner(SecondBackButton, 10)
+local SecondTitle=Instance.new("TextLabel")
+SecondTitle.Size=UDim2.new(1,0,0,50)
+SecondTitle.BackgroundTransparency=1
+SecondTitle.TextColor3=Color3.fromRGB(200,200,200)
+SecondTitle.TextScaled=true
+SecondTitle.Text="Второе меню"
+SecondTitle.Parent=SecondFrame
 
--- Третье меню с листанием
-local ThirdFrame = Instance.new("Frame", GUI)
-ThirdFrame.Size = MainFrame.Size
-ThirdFrame.Position = UDim2.new(1, 10, 0.5, -100)
-ThirdFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-ThirdFrame.BackgroundTransparency = 0.59
-ThirdFrame.Visible = false
-createUICorner(ThirdFrame, 20)
+-- Поле ввода скорости
+local SpeedLabel=Instance.new("TextLabel")
+SpeedLabel.Size=UDim2.new(1,-20,0,25)
+SpeedLabel.Position=UDim2.new(0,10,0,60)
+SpeedLabel.BackgroundTransparency=1
+SpeedLabel.TextColor3=Color3.fromRGB(200,200,200)
+SpeedLabel.TextScaled=true
+SpeedLabel.Text="Введите скорость:"
+SpeedLabel.TextXAlignment=Enum.TextXAlignment.Left
+SpeedLabel.Parent=SecondFrame
 
-local Pages = {
-    "Страница 1: Привет!",
-    "Страница 2: Это пример листания.",
-    "Страница 3: Здесь можно добавить что угодно."
-}
-local currentPage = 1
+local SpeedInput=Instance.new("TextBox")
+SpeedInput.Size=UDim2.new(1,-20,0,40)
+SpeedInput.Position=UDim2.new(0,10,0,90)
+SpeedInput.BackgroundTransparency=0.59
+SpeedInput.BackgroundColor3=Color3.fromRGB(30,30,30)
+SpeedInput.TextColor3=Color3.fromRGB(200,200,200)
+SpeedInput.PlaceholderColor3=Color3.fromRGB(200,200,200)
+SpeedInput.PlaceholderText="Скорость (число)"
+SpeedInput.ClearTextOnFocus=false
+SpeedInput.Parent=SecondFrame
+CreateUICorner(SpeedInput,10)
 
-local PageLabel = Instance.new("TextLabel", ThirdFrame)
-PageLabel.Size = UDim2.new(1, -20, 0, 100)
-PageLabel.Position = UDim2.new(0, 10, 0, 50)
-PageLabel.BackgroundTransparency = 1
-PageLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-PageLabel.TextScaled = true
-PageLabel.TextWrapped = true
-PageLabel.Text = Pages[currentPage]
+local ApplySpeedButton=Instance.new("TextButton")
+ApplySpeedButton.Size=UDim2.new(1,-20,0,40)
+ApplySpeedButton.Position=UDim2.new(0,10,0,140)
+ApplySpeedButton.BackgroundTransparency=0.59
+ApplySpeedButton.BackgroundColor3=Color3.fromRGB(30,30,30)
+ApplySpeedButton.TextColor3=Color3.fromRGB(200,200,200)
+ApplySpeedButton.TextScaled=true
+ApplySpeedButton.Text="Применить скорость"
+ApplySpeedButton.Parent=SecondFrame
+CreateUICorner(ApplySpeedButton,10)
 
-local PrevButton = Instance.new("TextButton", ThirdFrame)
-PrevButton.Size = UDim2.new(0, 60, 0, 30)
-PrevButton.Position = UDim2.new(0, 10, 1, -40)
-PrevButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-PrevButton.BackgroundTransparency = 0.59
-PrevButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-PrevButton.TextScaled = true
-PrevButton.Text = "< Назад"
-createUICorner(PrevButton, 10)
+local BackButton=Instance.new("TextButton")
+BackButton.Size=UDim2.new(0,100,0,30)
+BackButton.Position=UDim2.new(0.5,-50,1,-40)
+BackButton.BackgroundTransparency=0.59
+BackButton.BackgroundColor3=Color3.fromRGB(30,30,30)
+BackButton.TextColor3=Color3.fromRGB(200,200,200)
+BackButton.TextScaled=true
+BackButton.Text="Назад"
+BackButton.Parent=SecondFrame
+CreateUICorner(BackButton,10)
 
-local NextButton = Instance.new("TextButton", ThirdFrame)
-NextButton.Size = UDim2.new(0, 60, 0, 30)
-NextButton.Position = UDim2.new(1, -70, 1, -40)
-NextButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-NextButton.BackgroundTransparency = 0.59
-NextButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-NextButton.TextScaled = true
-NextButton.Text = "Вперёд >"
-createUICorner(NextButton, 10)
+local ErrorFrame=Instance.new("Frame")
+ErrorFrame.Size=UDim2.new(0,250,0,100)
+ErrorFrame.Position=UDim2.new(1,250,1,-110)
+ErrorFrame.BackgroundTransparency=0.59
+ErrorFrame.BackgroundColor3=Color3.fromRGB(30,30,30)
+ErrorFrame.Visible=false
+ErrorFrame.Parent=GUI
+CreateUICorner(ErrorFrame,20)
 
-local ThirdBackButton = Instance.new("TextButton", ThirdFrame)
-ThirdBackButton.Size = UDim2.new(0, 100, 0, 30)
-ThirdBackButton.Position = UDim2.new(0.5, -50, 1, -30)
-ThirdBackButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-ThirdBackButton.BackgroundTransparency = 0.59
-ThirdBackButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-ThirdBackButton.TextScaled = true
-ThirdBackButton.Text = "Назад"
-createUICorner(ThirdBackButton, 10)
+local ErrorOutline=Instance.new("Frame")
+ErrorOutline.Size=UDim2.new(1,8,1,8)
+ErrorOutline.Position=UDim2.new(0,-4,0,-4)
+ErrorOutline.BackgroundColor3=Color3.fromRGB(0,0,255)
+ErrorOutline.BorderSizePixel=0
+ErrorOutline.BackgroundTransparency=0.59
+ErrorOutline.Parent=ErrorFrame
+ErrorOutline.ZIndex=ErrorFrame.ZIndex-1
+CreateUICorner(ErrorOutline,20)
 
--- Ошибки и сообщения
-local ErrorFrame = Instance.new("Frame", GUI)
-ErrorFrame.Size = UDim2.new(0, 250, 0, 100)
-ErrorFrame.Position = UDim2.new(1, 250, 1, -110)
-ErrorFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-ErrorFrame.BackgroundTransparency = 0.59
-ErrorFrame.Visible = false
-createUICorner(ErrorFrame, 20)
-
-local ErrorOutline = Instance.new("Frame", ErrorFrame)
-ErrorOutline.Size = UDim2.new(1, 8, 1, 8)
-ErrorOutline.Position = UDim2.new(0, -4, 0, -4)
-ErrorOutline.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
-ErrorOutline.BorderSizePixel = 0
-ErrorOutline.BackgroundTransparency = 0.59
-createUICorner(ErrorOutline, 20)
-
-local ErrorLabel = Instance.new("TextLabel", ErrorFrame)
-ErrorLabel.Size = UDim2.new(1, -20, 1, -20)
-ErrorLabel.Position = UDim2.new(0, 10, 0, 10)
-ErrorLabel.BackgroundTransparency = 1
-ErrorLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-ErrorLabel.TextScaled = true
-ErrorLabel.TextWrapped = true
+local ErrorLabel=Instance.new("TextLabel")
+ErrorLabel.Size=UDim2.new(1,-20,1,-20)
+ErrorLabel.Position=UDim2.new(0,10,0,10)
+ErrorLabel.BackgroundTransparency=1
+ErrorLabel.TextColor3=Color3.fromRGB(200,200,200)
+ErrorLabel.TextScaled=true
+ErrorLabel.TextWrapped=true
+ErrorLabel.Text=""
+ErrorLabel.Parent=ErrorFrame
 
 local function AnimateErrorIn()
-    ErrorFrame.Position = UDim2.new(1, 250, 1, -110)
-    ErrorFrame.Visible = true
-    TweenService:Create(ErrorFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(1, -260, 1, -110)}):Play()
+    ErrorFrame.Position=UDim2.new(1,250,1,-110)
+    ErrorFrame.Visible=true
+    TweenService:Create(ErrorFrame,TweenInfo.new(0.6,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Position=UDim2.new(1,-260,1,-110)}):Play()
 end
 
 local function AnimateErrorOut()
-    local tween = TweenService:Create(ErrorFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(1, 250, 1, -110)})
+    local tween=TweenService:Create(ErrorFrame,TweenInfo.new(0.6,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{Position=UDim2.new(1,250,1,-110)})
     tween:Play()
-    tween.Completed:Connect(function() ErrorFrame.Visible = false end)
+    tween.Completed:Connect(function() ErrorFrame.Visible=false end)
 end
 
-local function Message(title, text, time)
-    ErrorLabel.Text = title .. "\n" .. text
+local function Message(title,text,time)
+    ErrorLabel.Text=title.."\n"..text
     AnimateErrorIn()
-    task.delay(time or 5, AnimateErrorOut)
+    task.delay(time or 5,AnimateErrorOut)
 end
 
--- Анимации меню
-local function AnimateOut(frame)
-    local tween = TweenService:Create(frame, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Position = UDim2.new(1, 10, 0.5, -100)})
+local function AnimateMainOut()
+    local tween=TweenService:Create(MainFrame,TweenInfo.new(0.6,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{Position=UDim2.new(1,10,0.5,-100)})
     tween:Play()
     tween.Completed:Wait()
-    frame.Visible = false
+    MainFrame.Visible=false
 end
 
-local function AnimateIn(frame)
-    frame.Position = UDim2.new(1, 10, 0.5, -100)
-    frame.Visible = true
-    local tween = TweenService:Create(frame, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -150, 0.5, -100)})
+local function AnimateMainIn()
+    MainFrame.Position=UDim2.new(1,10,0.5,-100)
+    MainFrame.Visible=true
+    local tween=TweenService:Create(MainFrame,TweenInfo.new(0.6,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Position=UDim2.new(0.5,-150,0.5,-100)})
     tween:Play()
     tween.Completed:Wait()
 end
 
--- Переключение меню и кнопок
+local function AnimateSecondIn()
+    SecondFrame.Position=UDim2.new(1,10,0.5,-100)
+    SecondFrame.Visible=true
+    local tween=TweenService:Create(SecondFrame,TweenInfo.new(0.6,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Position=UDim2.new(0.5,-150,0.5,-100)})
+    tween:Play()
+    tween.Completed:Wait()
+end
+
+local function AnimateSecondOut()
+    local tween=TweenService:Create(SecondFrame,TweenInfo.new(0.6,Enum.EasingStyle.Quad,Enum.EasingDirection.In),{Position=UDim2.new(1,10,0.5,-100)})
+    tween:Play()
+    tween.Completed:Wait()
+    SecondFrame.Visible=false
+end
+
 SwitchButton.MouseButton1Click:Connect(function()
-    playClick()
-    SwitchButton.Visible = false
-    BackButton.Visible = true
+    PlayClickSound()
     task.spawn(function()
-        AnimateOut(MainFrame)
-        AnimateIn(SecondFrame)
+        AnimateMainOut()
+        AnimateSecondIn()
     end)
 end)
 
 BackButton.MouseButton1Click:Connect(function()
-    playClick()
-    BackButton.Visible = false
-    SwitchButton.Visible = true
+    PlayClickSound()
     task.spawn(function()
-        AnimateOut(SecondFrame)
-        AnimateIn(MainFrame)
+        AnimateSecondOut()
+        AnimateMainIn()
     end)
 end)
 
--- Третье меню открытие/закрытие
-local function ShowThird()
-    playClick()
-    task.spawn(function()
-        AnimateOut(SecondFrame)
-        AnimateIn(ThirdFrame)
-    end)
-end
-
-local function HideThird()
-    playClick()
-    task.spawn(function()
-        AnimateOut(ThirdFrame)
-        AnimateIn(SecondFrame)
-    end)
-end
-
-local OpenThirdButton = Instance.new("TextButton", SecondFrame)
-OpenThirdButton.Size = UDim2.new(0, 130, 0, 30)
-OpenThirdButton.Position = UDim2.new(0, 160, 0, 90)
-OpenThirdButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-OpenThirdButton.BackgroundTransparency = 0.59
-OpenThirdButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-OpenThirdButton.TextScaled = true
-OpenThirdButton.Text = "Открыть 3 меню"
-createUICorner(OpenThirdButton, 10)
-OpenThirdButton.MouseButton1Click:Connect(ShowThird)
-
-ThirdBackButton.MouseButton1Click:Connect(HideThird)
-
--- Листание страниц
-PrevButton.MouseButton1Click:Connect(function()
-    if currentPage > 1 then
-        currentPage -= 1
-        PageLabel.Text = Pages[currentPage]
-    end
-end)
-
-NextButton.MouseButton1Click:Connect(function()
-    if currentPage < #Pages then
-        currentPage += 1
-        PageLabel.Text = Pages[currentPage]
-    end
-end)
-
--- Открытие/закрытие главного меню
 OpenButton.MouseButton1Click:Connect(function()
-    playClick()
-    MainFrame.Visible = true
-    MainFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
-    SwitchButton.Visible = true
-    BackButton.Visible = false
+    PlayClickSound()
+    MainFrame.Visible=true
+    MainFrame.Position=UDim2.new(0.5,-150,0.5,-100)
 end)
 
 CloseButton.MouseButton1Click:Connect(function()
-    playClick()
-    MainFrame.Visible = false
-    SecondFrame.Visible = false
-    ThirdFrame.Visible = false
-    SwitchButton.Visible = false
-    BackButton.Visible = false
+    PlayClickSound()
+    MainFrame.Visible=false
+    SecondFrame.Visible=false
 end)
 
--- Поиск игрока
 local function GetPlayer(name)
-    for _, p in pairs(Players:GetPlayers()) do
+    for _,p in pairs(Players:GetPlayers()) do
         if p.Name:lower():find(name) then return p end
     end
     return nil
 end
 
-FlingButton.MouseButton1Click:Connect(function()
-    playClick()
-    local input = InputBox.Text:lower()
-    if input == "all" then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= Player then
-                -- Ваша функция SkidFling(p)
+Button.MouseButton1Click:Connect(function()
+    PlayClickSound()
+    local input=InputBox.Text:lower()
+    if input=="all" then
+        for _,p in pairs(Players:GetPlayers()) do
+            if p~=Player then
+                -- Вызов вашей функции SkidFling(p)
             end
         end
     else
-        local target = GetPlayer(input)
+        local target=GetPlayer(input)
         if target then
-            -- Ваша функция SkidFling(target)
+            -- Вызов вашей функции SkidFling(target)
         else
-            Message("Ошибка", "Игрок не найден", 5)
+            Message("Ошибка","Игрок не найден",5)
         end
     end
 end)
 
--- Логика скорости
-local currentSpeed = 0
-local function SetSpeed(speed)
-    currentSpeed = speed
-    print("Скорость установлена:", speed)
-    -- Ваша логика применения скорости
-end
-
+-- Обработка кнопки применения скорости
 ApplySpeedButton.MouseButton1Click:Connect(function()
-    playClick()
+    PlayClickSound()
     local speed = tonumber(SpeedInput.Text)
     if speed and speed > 0 then
-        SetSpeed(speed)
-        Message("Успех", "Скорость установлена: " .. speed, 3)
+        -- Здесь можно вызвать функцию, которая применит скорость, например:
+        -- SetSpeed(speed)
+        print("Применена скорость:", speed) -- Пока просто вывод в консоль
+        Message("Успех", "Скорость установлена: "..speed, 3)
     else
         Message("Ошибка", "Введите корректное число скорости", 3)
     end
 end)
 
--- Цвета и плавное переливание
-local bgColors = {Color3.fromRGB(30,30,30), Color3.fromRGB(0,0,0), Color3.fromRGB(200,200,200), Color3.fromRGB(255,182,193)}
-local textColors = {Color3.fromRGB(200,200,200), Color3.fromRGB(255,182,193), Color3.fromRGB(30,30,30), Color3.fromRGB(0,0,0)}
-local outlineColors = {Color3.fromRGB(0,0,255), Color3.fromRGB(255,255,255), Color3.fromRGB(255,105,180)}
+if not getgenv().Welcome then Message("Script by https://t.me/vomagla","nonka!",5) end
+getgenv().Welcome=true
 
-local bgIndex, bgNextIndex, bgLerpAlpha, bgLerpSpeed = 1, 2, 0, 0.001
-local textIndex, textNextIndex, textLerpAlpha, textLerpSpeed = 1, 2, 0, 0.001
-local outlineIndex, outlineNextIndex, outlineLerpAlpha, outlineLerpSpeed = 1, 2, 0, 0.005
+local bgColors={Color3.fromRGB(30,30,30),Color3.fromRGB(0,0,0),Color3.fromRGB(200,200,200),Color3.fromRGB(255,182,193)}
+local textColors={Color3.fromRGB(200,200,200),Color3.fromRGB(255,182,193),Color3.fromRGB(30,30,30),Color3.fromRGB(0,0,0)}
+local outlineColors={Color3.fromRGB(0,0,255),Color3.fromRGB(255,255,255),Color3.fromRGB(255,105,180)}
+
+local bgIndex,bgNextIndex,bgLerpAlpha,bgLerpSpeed=1,2,0,0.001
+local textIndex,textNextIndex,textLerpAlpha,textLerpSpeed=1,2,0,0.001
+local outlineIndex,outlineNextIndex,outlineLerpAlpha,outlineLerpSpeed=1,2,0,0.005
 
 local function LerpColor(a,b,t)
-    return Color3.new(a.R+(b.R - a.R)*t, a.G+(b.G - a.G)*t, a.B+(b.B - a.B)*t)
+    return Color3.new(a.R+(b.R - a.R)*t,a.G+(b.G - a.G)*t,a.B+(b.B - a.B)*t)
 end
 
 RunService.RenderStepped:Connect(function()
-    bgLerpAlpha += bgLerpSpeed
-    if bgLerpAlpha >= 1 then
-        bgLerpAlpha = 0
-        bgIndex = bgNextIndex
-        bgNextIndex = bgNextIndex + 1 > #bgColors and 1 or bgNextIndex + 1
+    bgLerpAlpha=bgLerpAlpha+bgLerpSpeed
+    if bgLerpAlpha>=1 then
+        bgLerpAlpha=0
+        bgIndex=bgNextIndex
+        bgNextIndex=bgNextIndex+1>#bgColors and 1 or bgNextIndex+1
     end
-    local currentBg = LerpColor(bgColors[bgIndex], bgColors[bgNextIndex], bgLerpAlpha)
-    MainFrame.BackgroundColor3 = currentBg
-    InputBox.BackgroundColor3 = currentBg
-    FlingButton.BackgroundColor3 = currentBg
-    SwitchButton.BackgroundColor3 = currentBg
-    BackButton.BackgroundColor3 = currentBg
-    SecondFrame.BackgroundColor3 = currentBg
-    SpeedInput.BackgroundColor3 = currentBg
-    ApplySpeedButton.BackgroundColor3 = currentBg
-    ThirdFrame.BackgroundColor3 = currentBg
-    PrevButton.BackgroundColor3 = currentBg
-    NextButton.BackgroundColor3 = currentBg
-    ThirdBackButton.BackgroundColor3 = currentBg
+    local currentBg=LerpColor(bgColors[bgIndex],bgColors[bgNextIndex],bgLerpAlpha)
+    MainFrame.BackgroundColor3=currentBg
+    InputBox.BackgroundColor3=currentBg
+    Button.BackgroundColor3=currentBg
+    OpenButton.BackgroundColor3=currentBg
+    CloseButton.BackgroundColor3=currentBg
+    ErrorFrame.BackgroundColor3=currentBg
+    SecondFrame.BackgroundColor3=currentBg
+    SpeedInput.BackgroundColor3=currentBg
+    ApplySpeedButton.BackgroundColor3=currentBg
 
-    textLerpAlpha += textLerpSpeed
-    if textLerpAlpha >= 1 then
-        textLerpAlpha = 0
-        textIndex = textNextIndex
-        textNextIndex = textNextIndex + 1 > #textColors and 1 or textNextIndex + 1
+    textLerpAlpha=textLerpAlpha+textLerpSpeed
+    if textLerpAlpha>=1 then
+        textLerpAlpha=0
+        textIndex=textNextIndex
+        textNextIndex=textNextIndex+1>#textColors and 1 or textNextIndex+1
     end
-    local currentText = LerpColor(textColors[textIndex], textColors[textNextIndex], textLerpAlpha)
-    TitleLabel.TextColor3 = currentText
-    InputBox.TextColor3 = currentText
-    InputBox.PlaceholderColor3 = currentText
-    FlingButton.TextColor3 = currentText
-    SwitchButton.TextColor3 = currentText
-    BackButton.TextColor3 = currentText
-    SpeedLabel.TextColor3 = currentText
-    SpeedInput.TextColor3 = currentText
-    SpeedInput.PlaceholderColor3 = currentText
-    ApplySpeedButton.TextColor3 = currentText
-    PageLabel.TextColor3 = currentText
-    PrevButton.TextColor3 = currentText
-    NextButton.TextColor3 = currentText
-    ThirdBackButton.TextColor3 = currentText
+    local currentText=LerpColor(textColors[textIndex],textColors[textNextIndex],textLerpAlpha)
+    TitleLabel.TextColor3=currentText
+    InputBox.TextColor3=currentText
+    InputBox.PlaceholderColor3=currentText
+    Button.TextColor3=currentText
+    OpenButton.TextColor3=currentText
+    CloseButton.TextColor3=currentText
+    ErrorLabel.TextColor3=currentText
+    SecondTitle.TextColor3=currentText
+    BackButton.TextColor3=currentText
+    SwitchButton.TextColor3=currentText
+    SpeedLabel.TextColor3=currentText
+    SpeedInput.TextColor3=currentText
+    SpeedInput.PlaceholderColor3=currentText
+    ApplySpeedButton.TextColor3=currentText
 
-    outlineLerpAlpha += outlineLerpSpeed
-    if outlineLerpAlpha >= 1 then
-        outlineLerpAlpha = 0
-        outlineIndex = outlineNextIndex
-        outlineNextIndex = outlineNextIndex + 1 > #outlineColors and 1 or outlineNextIndex + 1
+    outlineLerpAlpha=outlineLerpAlpha+outlineLerpSpeed
+    if outlineLerpAlpha>=1 then
+        outlineLerpAlpha=0
+        outlineIndex=outlineNextIndex
+        outlineNextIndex=outlineNextIndex+1>#outlineColors and 1 or outlineNextIndex+1
     end
-    local currentOutline = LerpColor(outlineColors[outlineIndex], outlineColors[outlineNextIndex], outlineLerpAlpha)
-    OutlineFrame.BackgroundColor3 = currentOutline
+    local currentOutline=LerpColor(outlineColors[outlineIndex],outlineColors[outlineNextIndex],outlineLerpAlpha)
+    OutlineFrame.BackgroundColor3=currentOutline
+    ErrorOutline.BackgroundColor3=currentOutline
 end)
