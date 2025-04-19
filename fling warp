@@ -386,3 +386,15 @@ RunService.RenderStepped:Connect(function()
 
 	-- Остальные элементы (текст, кнопки) не меняют цвет
 end)
+-- Вставьте этот код в САМЫЙ КОНЕЦ вашего скрипта
+task.wait(0.1) -- Ждём загрузку GUI
+
+for _, guiObject in pairs(GUI:GetDescendants()) do
+    if guiObject:IsA("GuiObject") then
+        guiObject.BackgroundTransparency = 0.58 -- 42% прозрачности (100-42=58)
+        
+        if guiObject:IsA("TextLabel") or guiObject:IsA("TextButton") or guiObject:IsA("TextBox") then
+            guiObject.TextTransparency = 0 -- текст непрозрачный
+        end
+    end
+end
