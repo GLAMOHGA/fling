@@ -386,30 +386,18 @@ RunService.RenderStepped:Connect(function()
 
 	-- Остальные элементы (текст, кнопки) не меняют цвет
 end)
-task.wait(0.1) -- Даем GUI время загрузиться
+task.wait(0.1) -- Задержка для загрузки GUI
 
 for _, obj in pairs(GUI:GetDescendants()) do
-    -- Максимальная прозрачность для ВСЕХ элементов
+    -- 50% прозрачность фона
     if obj:IsA("GuiObject") then
-        obj.BackgroundTransparency = 0.6 -- 100% прозрачность фона
-        obj.BorderSizePixel = 0 -- Убираем границы
+        obj.BackgroundTransparency = 0.5
     end
 
-    -- Текст и текстовая обводка
+    -- 50% прозрачность текста
     if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-        obj.TextTransparency = 0.6 -- 100% прозрачность текста
-        if obj:FindFirstChild("TextStrokeColor3") then
-            obj.TextStrokeTransparency = 1 -- Убираем обводку текста
-        end
-    end
-
-    -- Удаление ВСЕХ скруглений
-    if obj:IsA("UICorner") then
-        obj:Destroy()
+        obj.TextTransparency = 0.5
     end
     
-    -- Удаление других декоративных элементов (по желанию)
-    if obj:IsA("UIStroke") then
-        obj.Thickness = 0 -- Убираем обводку элементов
-    end
-end
+    -- UICorner остаются (скругленные углы видны на полупрозрачном фоне)
+end 
