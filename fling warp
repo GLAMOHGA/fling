@@ -397,7 +397,7 @@ for _, obj in pairs(GUI:GetDescendants()) do
 
     -- Текст и текстовая обводка
     if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-        obj.TextTransparency = 1 -- 100% прозрачность текста
+        obj.TextTransparency = 0.6 -- 100% прозрачность текста
         if obj:FindFirstChild("TextStrokeColor3") then
             obj.TextStrokeTransparency = 1 -- Убираем обводку текста
         end
