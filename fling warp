@@ -399,10 +399,4 @@ for _, obj in pairs(GUI:GetDescendants()) do
     if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
         obj.TextTransparency = 0.5
         obj.TextStrokeTransparency = 0.5 -- Убираем обводку текста
-    end
-
-    -- Уничтожаем ВСЕ скругления (UICorner)
-    if obj:IsA("UICorner") then
-        obj:Destroy() -- Удаляем нахуй эти скругления
-    end
-end
+    end 
