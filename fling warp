@@ -389,3 +389,15 @@ end)
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 10)
 corner.Parent = MainFrame
+task.wait(0.1) 
+
+for _, obj in pairs(GUI:GetDescendants()) do
+   
+    if obj:IsA("GuiObject") then
+        obj.BackgroundTransparency = 0.5
+    end
+
+   
+    if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+        obj.TextTransparency = 0.5
+    end
