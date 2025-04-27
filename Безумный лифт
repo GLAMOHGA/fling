@@ -1,0 +1,101 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/wizard"))()
+
+-- Главное меню с новым названием
+local MainWindow = Library:NewWindow("Безумный лифт")
+local CheatsSection = MainWindow:NewSection("Функции")
+local MiscSection = MainWindow:NewSection("Misc")
+
+-- Универсальная функция уведомлений
+function CreateNotification(text)
+    local gui = Instance.new("ScreenGui", game.Players.LocalPlayer.PlayerGui)
+    gui.Name = "Notification_"..tostring(math.random(1000,9999))
+    
+    local frame = Instance.new("Frame", gui)
+    frame.BackgroundColor3 = Color3.new(0, 0, 0)
+    frame.BackgroundTransparency = 0.7 -- Прозрачность 70%
+    frame.Size = UDim2.new(0, 300, 0, 70)
+    frame.Position = UDim2.new(0.5, -150, 0.5, -35) -- Центр экрана
+    frame.AnchorPoint = Vector2.new(0.5, 0.5)
+    
+    local corner = Instance.new("UICorner", frame)
+    corner.CornerRadius = UDim.new(0, 12)
+    
+    local label = Instance.new("TextLabel", frame)
+    label.Text = text
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.new(1, 1, 1)
+    label.Font = Enum.Font.SourceSansBold
+    label.TextSize = 24
+    label.TextWrapped = true
+    
+    task.delay(2, function()
+        gui:Destroy()
+    end)
+end
+
+-- FullBright Toggle
+CheatsSection:CreateToggle("FullBright", function(value)
+    _G.E = value
+    
+    if not _G.FB then
+        _G.FB = true
+        local l = game:GetService("Lighting")
+        _G.S = {
+            B = l.Brightness,
+            C = l.ClockTime,
+            F = l.FogEnd,
+            G = l.GlobalShadows,
+            A = l.Ambient
+        }
+        
+        for k, v in pairs({B=1,C=12,F=786543,G=false,A=Color3.fromRGB(178,178,178)}) do
+            l:GetPropertyChangedSignal(k == 'B' and 'Brightness' or 
+                                     k == 'C' and 'ClockTime' or 
+                                     k == 'F' and 'FogEnd' or 
+                                     k == 'G' and 'GlobalShadows' or 'Ambient')
+            :Connect(function()
+                if _G.E then 
+                    l[k == 'B' and 'Brightness' or 
+                      k == 'C' and 'ClockTime' or 
+                      k == 'F' and 'FogEnd' or 
+                      k == 'G' and 'GlobalShadows' or 'Ambient'] = v 
+                end
+            end)
+        end
+        
+        spawn(function()
+            while task.wait(0.5) do
+                for k, v in pairs(_G.E and {B=1,C=12,F=786543,G=false,A=Color3.fromRGB(178,178,178)} or _G.S) do
+                    l[k == 'B' and 'Brightness' or 
+                      k == 'C' and 'ClockTime' or 
+                      k == 'F' and 'FogEnd' or 
+                      k == 'G' and 'GlobalShadows' or 'Ambient'] = v
+                end
+            end
+        end)
+    end
+end)
+
+-- Удаление VIP
+CheatsSection:CreateButton("Удалить VIP", function()
+    local target = Vector3.new(-1891.58752, -392.123871, 911.647888)
+    
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Position - target).Magnitude < 1 then
+            obj:Destroy()
+            CreateNotification("УДАЛЕНО")
+            break
+        end
+    end
+end)
+
+-- Секция Misc
+MiscSection:CreateButton("by https://t.me/vomagla", function()
+    setclipboard("https://t.me/vomagla")
+    CreateNotification("Ссылка скопирована!")
+end)
+
+MiscSection:CreateButton("Infinite Yield", function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+end)
