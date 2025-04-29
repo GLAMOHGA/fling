@@ -1,0 +1,200 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/wizard"))()
+local MainWindow = Library:NewWindow("Dance")
+local CheatsSection = MainWindow:NewSection("Функции")
+
+local danceTrack_anka
+local isPlaying_anka = false
+
+local danceTrack_jumpstyle
+local isPlaying_jumpstyle = false
+
+local danceTrack_romantik
+local isPlaying_romantik = false
+
+local danceTrack_raskoshniy
+local isPlaying_raskoshniy = false
+
+local danceTrack_bloodpop
+local isPlaying_bloodpop = false
+
+local danceTrack_drill
+local isPlaying_drill = false
+
+local danceTrack_woman
+local isPlaying_woman = false
+
+local danceTrack_funny
+local isPlaying_funny = false
+
+local danceTrack_hiocii -- новая анимация
+local isPlaying_hiocii = false
+
+-- Функция для загрузки анимации по id
+local function LoadAnimation(animId)
+    local character = game.Players.LocalPlayer.Character
+    if not character then return nil end
+
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return nil end
+
+    local animation = Instance.new("Animation")
+    animation.AnimationId = animId
+    return humanoid:LoadAnimation(animation)
+end
+
+-- Анка
+CheatsSection:CreateToggle("Анка", function(state)
+    isPlaying_anka = state
+    if isPlaying_anka then
+        danceTrack_anka = danceTrack_anka or LoadAnimation("rbxassetid://17584719291")
+        if danceTrack_anka then danceTrack_anka:Play() end
+    else
+        if danceTrack_anka then danceTrack_anka:Stop() end
+    end
+end)
+
+-- jumpstyle
+CheatsSection:CreateToggle("jumpstyle", function(state)
+    isPlaying_jumpstyle = state
+    if isPlaying_jumpstyle then
+        danceTrack_jumpstyle = danceTrack_jumpstyle or LoadAnimation("rbxassetid://101682333769403")
+        if danceTrack_jumpstyle then danceTrack_jumpstyle:Play() end
+    else
+        if danceTrack_jumpstyle then danceTrack_jumpstyle:Stop() end
+    end
+end)
+
+-- романтик
+CheatsSection:CreateToggle("романтик", function(state)
+    isPlaying_romantik = state
+    if isPlaying_romantik then
+        danceTrack_romantik = danceTrack_romantik or LoadAnimation("rbxassetid://139219469387832")
+        if danceTrack_romantik then danceTrack_romantik:Play() end
+    else
+        if danceTrack_romantik then danceTrack_romantik:Stop() end
+    end
+end)
+
+-- раскошный
+CheatsSection:CreateToggle("раскошный", function(state)
+    isPlaying_raskoshniy = state
+    if isPlaying_raskoshniy then
+        danceTrack_raskoshniy = danceTrack_raskoshniy or LoadAnimation("rbxassetid://114182588860271")
+        if danceTrack_raskoshniy then danceTrack_raskoshniy:Play() end
+    else
+        if danceTrack_raskoshniy then danceTrack_raskoshniy:Stop() end
+    end
+end)
+
+-- bloodpop
+CheatsSection:CreateToggle("bloodpop", function(state)
+    isPlaying_bloodpop = state
+    if isPlaying_bloodpop then
+        danceTrack_bloodpop = danceTrack_bloodpop or LoadAnimation("rbxassetid://101307180406411")
+        if danceTrack_bloodpop then danceTrack_bloodpop:Play() end
+    else
+        if danceTrack_bloodpop then danceTrack_bloodpop:Stop() end
+    end
+end)
+
+-- drill
+CheatsSection:CreateToggle("drill", function(state)
+    isPlaying_drill = state
+    if isPlaying_drill then
+        danceTrack_drill = danceTrack_drill or LoadAnimation("rbxassetid://88628655368377")
+        if danceTrack_drill then danceTrack_drill:Play() end
+    else
+        if danceTrack_drill then danceTrack_drill:Stop() end
+    end
+end)
+
+-- woman
+CheatsSection:CreateToggle("woman", function(state)
+    isPlaying_woman = state
+    if isPlaying_woman then
+        danceTrack_woman = danceTrack_woman or LoadAnimation("rbxassetid://107716888711297")
+        if danceTrack_woman then danceTrack_woman:Play() end
+    else
+        if danceTrack_woman then danceTrack_woman:Stop() end
+    end
+end)
+
+-- funny
+CheatsSection:CreateToggle("funny", function(state)
+    isPlaying_funny = state
+    if isPlaying_funny then
+        danceTrack_funny = danceTrack_funny or LoadAnimation("rbxassetid://106579120805694")
+        if danceTrack_funny then danceTrack_funny:Play() end
+    else
+        if danceTrack_funny then danceTrack_funny:Stop() end
+    end
+end)
+
+-- хиоции (новая анимация)
+CheatsSection:CreateToggle("хиоции", function(state)
+    isPlaying_hiocii = state
+    if isPlaying_hiocii then
+        danceTrack_hiocii = danceTrack_hiocii or LoadAnimation("rbxassetid://125337773176540")
+        if danceTrack_hiocii then danceTrack_hiocii:Play() end
+    else
+        if danceTrack_hiocii then danceTrack_hiocii:Stop() end
+    end
+end)
+
+-- Респавн персонажа
+game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
+    if isPlaying_anka then
+        task.wait(1)
+        danceTrack_anka = LoadAnimation("rbxassetid://17584719291")
+        if danceTrack_anka then danceTrack_anka:Play() end
+    end
+    if isPlaying_jumpstyle then
+        task.wait(1)
+        danceTrack_jumpstyle = LoadAnimation("rbxassetid://101682333769403")
+        if danceTrack_jumpstyle then danceTrack_jumpstyle:Play() end
+    end
+    if isPlaying_romantik then
+        task.wait(1)
+        danceTrack_romantik = LoadAnimation("rbxassetid://139219469387832")
+        if danceTrack_romantik then danceTrack_romantik:Play() end
+    end
+    if isPlaying_raskoshniy then
+        task.wait(1)
+        danceTrack_raskoshniy = LoadAnimation("rbxassetid://114182588860271")
+        if danceTrack_raskoshniy then danceTrack_raskoshniy:Play() end
+    end
+    if isPlaying_bloodpop then
+        task.wait(1)
+        danceTrack_bloodpop = LoadAnimation("rbxassetid://101307180406411")
+        if danceTrack_bloodpop then danceTrack_bloodpop:Play() end
+    end
+    if isPlaying_drill then
+        task.wait(1)
+        danceTrack_drill = LoadAnimation("rbxassetid://88628655368377")
+        if danceTrack_drill then danceTrack_drill:Play() end
+    end
+    if isPlaying_woman then
+        task.wait(1)
+        danceTrack_woman = LoadAnimation("rbxassetid://107716888711297")
+        if danceTrack_woman then danceTrack_woman:Play() end
+    end
+    if isPlaying_funny then
+        task.wait(1)
+        danceTrack_funny = LoadAnimation("rbxassetid://106579120805694")
+        if danceTrack_funny then danceTrack_funny:Play() end
+    end
+    if isPlaying_hiocii then
+        task.wait(1)
+        danceTrack_hiocii = LoadAnimation("rbxassetid://125337773176540")
+        if danceTrack_hiocii then danceTrack_hiocii:Play() end
+    end
+end)
+
+-- Секция Misc
+local MiscSection = MainWindow:NewSection("Misc")
+MiscSection:CreateButton("by https://t.me/vomagla", function()
+    setclipboard("https://t.me/vomagla")
+end)
+MiscSection:CreateButton("Infinite Yield", function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+end)
