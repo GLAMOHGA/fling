@@ -1,407 +1,224 @@
+
+local Targets = {"All"} -- "All", "Target Name", "arian_was_here"
+
 local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-local SoundService = game:GetService("SoundService")
 
--- Анти-Флинг (NoCollisionConstraint)
-local createdConstraints = {}
-local antiFlingEnabled = false
+local AllBool = false
 
-local function createNoCollisionBetweenParts(part1, part2)
-	for _, constraint in pairs(part1:GetChildren()) do
-		if constraint:IsA("NoCollisionConstraint") and constraint.Part1 == part2 then return end
-	end
-	local noCollision = Instance.new("NoCollisionConstraint")
-	noCollision.Part0 = part1
-	noCollision.Part1 = part2
-	noCollision.Parent = part1
-	table.insert(createdConstraints, noCollision)
+local GetPlayer = function(Name)
+    Name = Name:lower()
+    if Name == "all" or Name == "others" then
+        AllBool = true
+        return
+    elseif Name == "random" then
+        local GetPlayers = Players:GetPlayers()
+        if table.find(GetPlayers,Player) then table.remove(GetPlayers,table.find(GetPlayers,Player)) end
+        return GetPlayers[math.random(#GetPlayers)]
+    elseif Name ~= "random" and Name ~= "all" and Name ~= "others" then
+        for _,x in next, Players:GetPlayers() do
+            if x ~= Player then
+                if x.Name:lower():match("^"..Name) then
+                    return x;
+                elseif x.DisplayName:lower():match("^"..Name) then
+                    return x;
+                end
+            end
+        end
+    else
+        return
+    end
 end
 
-local function noCollideWithPlayer(otherPlayer)
-	if not Player.Character or not otherPlayer.Character then return end
-	for _, myPart in pairs(Player.Character:GetChildren()) do
-		if myPart:IsA("BasePart") then
-			for _, otherPart in pairs(otherPlayer.Character:GetChildren()) do
-				if otherPart:IsA("BasePart") then
-					createNoCollisionBetweenParts(myPart, otherPart)
-				end
-			end
-		end
-	end
+local Message = function(_Title, _Text, Time)
+    game:GetService("StarterGui"):SetCore("SendNotification", {Title = _Title, Text = _Text, Duration = Time})
 end
 
-local function setupNoCollideForAllPlayers()
-	if not antiFlingEnabled then return end
-	for _, p in pairs(Players:GetPlayers()) do
-		if p ~= Player then
-			noCollideWithPlayer(p)
-		end
-	end
+local SkidFling = function(TargetPlayer)
+    local Character = Player.Character
+    local Humanoid = Character and Character:FindFirstChildOfClass("Humanoid")
+    local RootPart = Humanoid and Humanoid.RootPart
+
+    local TCharacter = TargetPlayer.Character
+    local THumanoid
+    local TRootPart
+    local THead
+    local Accessory
+    local Handle
+
+    if TCharacter:FindFirstChildOfClass("Humanoid") then
+        THumanoid = TCharacter:FindFirstChildOfClass("Humanoid")
+    end
+    if THumanoid and THumanoid.RootPart then
+        TRootPart = THumanoid.RootPart
+    end
+    if TCharacter:FindFirstChild("Head") then
+        THead = TCharacter.Head
+    end
+    if TCharacter:FindFirstChildOfClass("Accessory") then
+        Accessory = TCharacter:FindFirstChildOfClass("Accessory")
+    end
+    if Accessoy and Accessory:FindFirstChild("Handle") then
+        Handle = Accessory.Handle
+    end
+
+    if Character and Humanoid and RootPart then
+        if RootPart.Velocity.Magnitude < 50 then
+            getgenv().OldPos = RootPart.CFrame
+        end
+        if THumanoid and THumanoid.Sit and not AllBool then
+            return Message("Error Occurred", "Targeting is sitting", 5) -- u can remove dis part if u want lol
+        end
+        if THead then
+            workspace.CurrentCamera.CameraSubject = THead
+        elseif not THead and Handle then
+            workspace.CurrentCamera.CameraSubject = Handle
+        elseif THumanoid and TRootPart then
+            workspace.CurrentCamera.CameraSubject = THumanoid
+        end
+        if not TCharacter:FindFirstChildWhichIsA("BasePart") then
+            return
+        end
+        
+        local FPos = function(BasePart, Pos, Ang)
+            RootPart.CFrame = CFrame.new(BasePart.Position) * Pos * Ang
+            Character:SetPrimaryPartCFrame(CFrame.new(BasePart.Position) * Pos * Ang)
+            RootPart.Velocity = Vector3.new(9e7, 9e7 * 10, 9e7)
+            RootPart.RotVelocity = Vector3.new(9e8, 9e8, 9e8)
+        end
+        
+        local SFBasePart = function(BasePart)
+            local TimeToWait = 2
+            local Time = tick()
+            local Angle = 0
+
+            repeat
+                if RootPart and THumanoid then
+                    if BasePart.Velocity.Magnitude < 50 then
+                        Angle = Angle + 100
+
+                        FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle),0 ,0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(2.25, 1.5, -2.25) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(-2.25, -1.5, 2.25) + THumanoid.MoveDirection * BasePart.Velocity.Magnitude / 1.25, CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, 1.5, 0) + THumanoid.MoveDirection,CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0) + THumanoid.MoveDirection,CFrame.Angles(math.rad(Angle), 0, 0))
+                        task.wait()
+                    else
+                        FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, -THumanoid.WalkSpeed), CFrame.Angles(0, 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, 1.5, THumanoid.WalkSpeed), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+                        
+                        FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, -TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(0, 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, 1.5, TRootPart.Velocity.Magnitude / 1.25), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(math.rad(90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5 ,0), CFrame.Angles(math.rad(-90), 0, 0))
+                        task.wait()
+
+                        FPos(BasePart, CFrame.new(0, -1.5, 0), CFrame.Angles(0, 0, 0))
+                        task.wait()
+                    end
+                else
+                    break
+                end
+            until BasePart.Velocity.Magnitude > 500 or BasePart.Parent ~= TargetPlayer.Character or TargetPlayer.Parent ~= Players or not TargetPlayer.Character == TCharacter or THumanoid.Sit or Humanoid.Health <= 0 or tick() > Time + TimeToWait
+        end
+        
+        workspace.FallenPartsDestroyHeight = 0/0
+        
+        local BV = Instance.new("BodyVelocity")
+        BV.Name = "EpixVel"
+        BV.Parent = RootPart
+        BV.Velocity = Vector3.new(9e8, 9e8, 9e8)
+        BV.MaxForce = Vector3.new(1/0, 1/0, 1/0)
+        
+        Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+        
+        if TRootPart and THead then
+            if (TRootPart.CFrame.p - THead.CFrame.p).Magnitude > 5 then
+                SFBasePart(THead)
+            else
+                SFBasePart(TRootPart)
+            end
+        elseif TRootPart and not THead then
+            SFBasePart(TRootPart)
+        elseif not TRootPart and THead then
+            SFBasePart(THead)
+        elseif not TRootPart and not THead and Accessory and Handle then
+            SFBasePart(Handle)
+        else
+            return Message("Error Occurred", "Target is missing everything", 5)
+        end
+        
+        BV:Destroy()
+        Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+        workspace.CurrentCamera.CameraSubject = Humanoid
+        
+        repeat
+            RootPart.CFrame = getgenv().OldPos * CFrame.new(0, .5, 0)
+            Character:SetPrimaryPartCFrame(getgenv().OldPos * CFrame.new(0, .5, 0))
+            Humanoid:ChangeState("GettingUp")
+            table.foreach(Character:GetChildren(), function(_, x)
+                if x:IsA("BasePart") then
+                    x.Velocity, x.RotVelocity = Vector3.new(), Vector3.new()
+                end
+            end)
+            task.wait()
+        until (RootPart.Position - getgenv().OldPos.p).Magnitude < 25
+        workspace.FallenPartsDestroyHeight = getgenv().FPDH
+    else
+        return Message("Error Occurred", "Random error", 5)
+    end
 end
 
-local function clearAllNoCollisionConstraints()
-	for _, c in pairs(createdConstraints) do
-		if c and c.Parent then c:Destroy() end
-	end
-	createdConstraints = {}
+if not Welcome then Message("Script by AnthonyIsntHere", "Enjoy!", 5) end
+getgenv().Welcome = true
+if Targets[1] then for _,x in next, Targets do GetPlayer(x) end else return end
+
+if AllBool then
+    for _,x in next, Players:GetPlayers() do
+        SkidFling(x)
+    end
 end
 
-Players.PlayerAdded:Connect(function(p)
-	p.CharacterAdded:Connect(function()
-		wait(1)
-		if antiFlingEnabled then noCollideWithPlayer(p) end
-	end)
-end)
-
-Player.CharacterAdded:Connect(function()
-	wait(1)
-	if antiFlingEnabled then setupNoCollideForAllPlayers() end
-end)
-
-if Player.Character and antiFlingEnabled then
-	setupNoCollideForAllPlayers()
-end
-
--- Изменение скорости
-local function SetSpeed(speed)
-	local char = Player.Character or Player.CharacterAdded:Wait()
-	local humanoid = char:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		humanoid.WalkSpeed = speed
-		Player.CharacterAdded:Connect(function(newChar)
-			newChar:WaitForChild("Humanoid").WalkSpeed = speed
-		end)
-		return true
-	end
-	return false
-end
-
-local function PlayClickSound()
-	local s = Instance.new("Sound", SoundService)
-	s.SoundId = "rbxassetid://5852470908"
-	s.Volume = 2.2
-	s:Play()
-	s.Ended:Connect(function() s:Destroy() end)
-end
-
-local function CreateUICorner(parent, radius)
-	local c = Instance.new("UICorner", parent)
-	c.CornerRadius = UDim.new(0, radius)
-	return c
-end
-
-local function CreateButton(props)
-	local btn = Instance.new("TextButton")
-	for k,v in pairs(props) do btn[k] = v end
-	CreateUICorner(btn,10)
-	return btn
-end
-
-local function CreateLabel(props)
-	local lbl = Instance.new("TextLabel")
-	for k,v in pairs(props) do lbl[k] = v end
-	return lbl
-end
-
-local function CreateFrame(props)
-	local f = Instance.new("Frame")
-	for k,v in pairs(props) do f[k] = v end
-	CreateUICorner(f,20)
-	return f
-end
-
--- GUI и элементы
-local GUI = Instance.new("ScreenGui", Player.PlayerGui)
-GUI.Name = "CustomGUI"
-
-local MainFrame = CreateFrame{
-	Size = UDim2.new(0,300,0,200),
-	Position = UDim2.new(0.5,-150,0.5,-100),
-	BackgroundColor3 = Color3.fromRGB(20,20,20),
-	Visible = false,
-	Parent = GUI
-}
-
-local OutlineFrame = CreateFrame{
-	Size = UDim2.new(1,8,1,8),
-	Position = UDim2.new(0,-4,0,-4),
-	BackgroundColor3 = Color3.fromRGB(80,80,80),
-	BorderSizePixel = 0,
-	Parent = MainFrame
-}
-OutlineFrame.ZIndex = MainFrame.ZIndex - 1
-
-CreateLabel{
-	Size = UDim2.new(1,0,0,50),
-	BackgroundTransparency = 1,
-	TextColor3 = Color3.fromRGB(220,220,220),
-	TextScaled = true,
-	Text = "by https://t.me/vomagla",
-	Parent = MainFrame
-}
-
-local InputBox = Instance.new("TextBox", MainFrame)
-InputBox.Size = UDim2.new(1,-20,0,50)
-InputBox.Position = UDim2.new(0,10,0,60)
-InputBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
-InputBox.TextColor3 = Color3.fromRGB(230,230,230)
-InputBox.PlaceholderColor3 = Color3.fromRGB(180,180,180)
-InputBox.PlaceholderText = "Введите ник или 'all'"
-CreateUICorner(InputBox,10)
-
-local FlingButton = CreateButton{
-	Size = UDim2.new(1,-20,0,50),
-	Position = UDim2.new(0,10,0,120),
-	BackgroundColor3 = Color3.fromRGB(40,40,40),
-	TextColor3 = Color3.fromRGB(220,220,220),
-	TextScaled = true,
-	Text = "Флинг",
-	Parent = MainFrame
-}
-
-local SecondFrame = CreateFrame{
-	Size = UDim2.new(0,300,0,180),
-	Position = UDim2.new(1,10,0.5,-90),
-	BackgroundColor3 = Color3.fromRGB(20,20,20),
-	Visible = false,
-	Parent = GUI
-}
-
-CreateLabel{
-	Size = UDim2.new(0,80,0,30),
-	Position = UDim2.new(0,10,0,20),
-	BackgroundTransparency = 1,
-	TextColor3 = Color3.fromRGB(220,220,220),
-	TextScaled = true,
-	Text = "Скорость:",
-	TextXAlignment = Enum.TextXAlignment.Left,
-	Parent = SecondFrame
-}
-
-local SpeedInput = Instance.new("TextBox", SecondFrame)
-SpeedInput.Size = UDim2.new(0,150,0,30)
-SpeedInput.Position = UDim2.new(0,100,0,20)
-SpeedInput.BackgroundColor3 = Color3.fromRGB(40,40,40)
-SpeedInput.TextColor3 = Color3.fromRGB(230,230,230)
-SpeedInput.PlaceholderColor3 = Color3.fromRGB(180,180,180)
-SpeedInput.PlaceholderText = "Введите число"
-CreateUICorner(SpeedInput,10)
-
-local ApplySpeedButton = CreateButton{
-	Size = UDim2.new(0,120,0,30),
-	Position = UDim2.new(0,175,0,70),
-	BackgroundColor3 = Color3.fromRGB(40,40,40),
-	TextColor3 = Color3.fromRGB(220,220,220),
-	TextScaled = true,
-	Text = "Применить скорость",
-	Parent = SecondFrame
-}
-
-local AntiFlingButton = CreateButton{
-	Size = UDim2.new(0,120,0,30),
-	Position = UDim2.new(0, 10, 0, 70),
-	BackgroundColor3 = Color3.fromRGB(40,40,40),
-	TextColor3 = Color3.fromRGB(220,220,220),
-	TextScaled = true,
-	Text = "Анти Флинг: ВЫКЛ",
-	Parent = SecondFrame
-}
-
-AntiFlingButton.MouseButton1Click:Connect(function()
-	PlayClickSound()
-	antiFlingEnabled = not antiFlingEnabled
-	if antiFlingEnabled then
-		AntiFlingButton.Text = "Анти Флинг: ВКЛ"
-		setupNoCollideForAllPlayers()
-	else
-		AntiFlingButton.Text = "Анти Флинг: ВЫКЛ"
-		clearAllNoCollisionConstraints()
-	end
-end)
-
-local OpenButton = CreateButton{
-	Size = UDim2.new(0,100,0,30),
-	Position = UDim2.new(0.5,-50,-0.1),
-	BackgroundColor3 = Color3.fromRGB(40,40,40),
-	TextColor3 = Color3.fromRGB(220,220,220),
-	TextScaled = true,
-	Text = "Открыть",
-	Parent = GUI
-}
-
-local CloseButton = CreateButton{
-	Size = UDim2.new(0,100,0,30),
-	Position = UDim2.new(0.5,50,-0.1),
-	BackgroundColor3 = Color3.fromRGB(40,40,40),
-	TextColor3 = Color3.fromRGB(220,220,220),
-	TextScaled = true,
-	Text = "Закрыть",
-	Parent = GUI
-}
-
-local SwitchButton = CreateButton{
-	Size = UDim2.new(0,80,0,30),
-	Position = UDim2.new(0.5,150,0.5,-15),
-	BackgroundColor3 = Color3.fromRGB(40,40,40),
-	TextColor3 = Color3.fromRGB(220,220,220),
-	TextScaled = true,
-	Text = "Другое",
-	Parent = GUI,
-	Visible = false
-}
-
-local BackButton = CreateButton{
-	Size = UDim2.new(0,80,0,30),
-	Position = SwitchButton.Position,
-	BackgroundColor3 = Color3.fromRGB(40,40,40),
-	TextColor3 = Color3.fromRGB(220,220,220),
-	TextScaled = true,
-	Text = "Назад",
-	Parent = GUI,
-	Visible = false
-}
-
-OpenButton.MouseButton1Click:Connect(function()
-	PlayClickSound()
-	MainFrame.Visible = true
-	MainFrame.Position = UDim2.new(0.5,-150,0.5,-100)
-	SecondFrame.Visible = false
-	SwitchButton.Visible = true
-	BackButton.Visible = false
-end)
-
-CloseButton.MouseButton1Click:Connect(function()
-	PlayClickSound()
-	MainFrame.Visible = false
-	SecondFrame.Visible = false
-	SwitchButton.Visible = false
-	BackButton.Visible = false
-end)
-
-SwitchButton.MouseButton1Click:Connect(function()
-	PlayClickSound()
-	TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {Position=UDim2.new(1,10,0.5,-100)}):Play()
-	TweenService:Create(SecondFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {Position=UDim2.new(0.5,-150,0.5,-90)}):Play()
-	wait(0.6)
-	MainFrame.Visible = false
-	SecondFrame.Visible = true
-	SwitchButton.Visible = false
-	BackButton.Visible = true
-end)
-
-BackButton.MouseButton1Click:Connect(function()
-	PlayClickSound()
-	TweenService:Create(SecondFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {Position=UDim2.new(1,10,0.5,-100)}):Play()
-	TweenService:Create(MainFrame, TweenInfo.new(0.6, Enum.EasingStyle.Quad), {Position=UDim2.new(0.5,-150,0.5,-100)}):Play()
-	wait(0.6)
-	SecondFrame.Visible = false
-	MainFrame.Visible = true
-	BackButton.Visible = false
-	SwitchButton.Visible = true
-end)
-
-local function GetPlayer(name)
-	name = name:lower()
-	for _,p in pairs(Players:GetPlayers()) do
-		if p.Name:lower():find(name) then
-			return p
-		end
-	end
-	return nil
-end
-
-FlingButton.MouseButton1Click:Connect(function()
-	PlayClickSound()
-	local input = InputBox.Text:lower()
-	if input == "all" then
-		for _, p in pairs(Players:GetPlayers()) do
-			if p ~= Player then
-				-- Ваш код флинга
-			end
-		end
-	else
-		local target = GetPlayer(input)
-		if target then
-			-- Ваш код флинга
-		else
-			warn("Игрок не найден")
-		end
-	end
-end)
-
-ApplySpeedButton.MouseButton1Click:Connect(function()
-	PlayClickSound()
-	local speed = tonumber(SpeedInput.Text)
-	if speed and speed > 0 then
-		if SetSpeed(speed) then
-			print("Скорость установлена: "..speed)
-		else
-			warn("Персонаж или Humanoid не найден")
-		end
-	else
-		warn("Введите корректное число скорости")
-	end
-end)
-
--- Цвета для плавного перелива фона меню
-local bgColors = {
-	Color3.fromRGB(20, 20, 20),    -- тёмно-чёрный
-	Color3.fromRGB(180, 180, 180), -- светло-серый
-	Color3.fromRGB(230, 230, 230)  -- чуть затемнённый белый
-}
-
-local bgIndex, bgAlpha = 1, 0
-
-local function LerpColor(a, b, t)
-	return Color3.new(
-		a.R + (b.R - a.R) * t,
-		a.G + (b.G - a.G) * t,
-		a.B + (b.B - a.B) * t
-	)
-end
-
-local function CycleColors(colors, index, alpha, speed)
-	alpha = alpha + speed
-	if alpha >= 1 then
-		alpha = 0
-		index = index + 1
-		if index > #colors then index = 1 end
-	end
-	local nextIndex = index + 1
-	if nextIndex > #colors then nextIndex = 1 end
-	return LerpColor(colors[index], colors[nextIndex], alpha), index, alpha
-end
-
-RunService.RenderStepped:Connect(function()
-	local bgColor
-	bgColor, bgIndex, bgAlpha = CycleColors(bgColors, bgIndex, bgAlpha, 0.0015)
-
-	-- Применяем цвет только к фонам меню
-	MainFrame.BackgroundColor3 = bgColor
-	SecondFrame.BackgroundColor3 = bgColor
-	OutlineFrame.BackgroundColor3 = bgColor:Lerp(Color3.fromRGB(80,80,80), 0.5) -- Немного светлее для обводки
-end)
-
--- Устанавливаем прозрачность 0.5 для всех GUI элементов, которые видны и имеют фон или текст
-for _, obj in pairs(GUI:GetDescendants()) do
-	if obj:IsA("GuiObject") then
-		-- Устанавливаем прозрачность фона, если есть BackgroundColor3
-		-- и если элемент не полностью прозрачный изначально
-		if obj.BackgroundTransparency < 1 then
-			obj.BackgroundTransparency = 0.5
-		end
-	end
-
-	if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
-		-- Устанавливаем прозрачность текста
-		if obj.TextTransparency < 1 then
-			obj.TextTransparency = 0.5
-		end
-		-- PlaceholderTextTransparency для TextBox
-		if obj:IsA("TextBox") then
-			obj.PlaceholderTextTransparency = 0.5
-		end
-	end
+for _,x in next, Targets do
+    if GetPlayer(x) and GetPlayer(x) ~= Player then
+        if GetPlayer(x).UserId ~= 1414978355 then
+            local TPlayer = GetPlayer(x)
+            if TPlayer then
+                SkidFling(TPlayer)
+            end
+        else
+            
+        end
+    elseif not GetPlayer(x) and not AllBool then
+        Message("Error Occurred", "Username Invalid", 5)
+    end
 end
