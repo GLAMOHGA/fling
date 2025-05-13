@@ -1,0 +1,64 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/wizard"))()
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local MainWindow = Library:NewWindow("사라지는 파트")
+local AutoTouchSection = MainWindow:NewSection("game")
+
+local autoTouchEnabled = false
+local playerHead = nil
+local touchLoop
+
+local function ToggleAutoTouch(value)
+    autoTouchEnabled = value
+    if autoTouchEnabled then
+        if player and player.Character and player.Character:FindFirstChild("Head") then
+            playerHead = player.Character.Head
+        else
+            return
+        end
+
+        touchLoop = task.spawn(function()
+            while autoTouchEnabled do
+                if not playerHead or not playerHead.Parent then
+                    local char = player.Character
+                    if char and char:FindFirstChild("Head") then
+                        playerHead = char.Head
+                    else
+                        break
+                    end
+                end
+                for _, part in pairs(workspace:GetChildren()) do
+                    if part.Name == "사라지는 파트" and part:IsA("BasePart") then
+                        firetouchinterest(part, playerHead, 1)
+                        firetouchinterest(part, playerHead, 0)
+                    end
+                end
+                task.wait(2)
+            end
+        end)
+    else
+        autoTouchEnabled = false
+        if touchLoop then
+            task.cancel(touchLoop)
+            touchLoop = nil
+        end
+    end
+end
+
+AutoTouchSection:CreateToggle("Auto Touch 사라지는 파트", ToggleAutoTouch)
+
+AutoTouchSection:CreateButton("FlyGui", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/XNEOFF/FlyGuiV3/main/FlyGuiV3.txt"))("t.me/Dingascripts")
+end)
+
+local MiscSection = MainWindow:NewSection("Misc")
+
+MiscSection:CreateButton("by https://t.me/vomagla", function()
+    setclipboard("https://t.me/vomagla")
+end)
+
+MiscSection:CreateButton("Infinite Yield", function()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source'))()
+end)
