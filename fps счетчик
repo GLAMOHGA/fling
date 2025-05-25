@@ -1,0 +1,151 @@
+local player = game:GetService("Players").LocalPlayer
+local gui = Instance.new("ScreenGui")
+gui.Name = "StatsDisplay"
+gui.Parent = player:WaitForChild("PlayerGui")
+gui.ResetOnSpawn = false
+
+local player = game:GetService("Players").LocalPlayer
+local gui = Instance.new("ScreenGui")
+gui.Name = "RobloxNotification"
+gui.Parent = player:WaitForChild("PlayerGui")
+gui.ResetOnSpawn = false
+
+-- Базовая структура как в Roblox
+local notification = Instance.new("Frame")
+notification.Name = "Notification"
+notification.Size = UDim2.new(0, 300, 0, 80)
+notification.Position = UDim2.new(0.5, -150, 0.1, -100)
+notification.AnchorPoint = Vector2.new(0.5, 0)
+notification.BackgroundColor3 = Color3.fromRGB(31, 31, 31)
+notification.BorderSizePixel = 0
+notification.Parent = gui
+
+-- Скругление углов
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 8)
+corner.Parent = notification
+
+-- Анимация появления
+notification:TweenPosition(UDim2.new(0.5, -2, 0.4, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.5)
+
+-- Содержимое уведомления
+local title = Instance.new("TextLabel")
+title.Text = "by https://t.me/vomagla"
+title.Size = UDim2.new(1, 0, 1, 0)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamSemibold
+title.TextColor3 = Color3.new(1, 1, 1)
+title.TextSize = 18
+title.Parent = notification
+
+-- Автоматическое скрытие через 3 секунды
+task.delay(3, function()
+    notification:TweenPosition(UDim2.new(0.5, 150, 0.1, -100), Enum.EasingDirection.In, Enum.EasingStyle.Quad, 0.5, false, function()
+        notification:Destroy()
+    end)
+end)
+
+local sound = Instance.new("Sound")
+sound.SoundId = "rbxassetid://7861313217"
+sound.Parent = game:GetService("SoundService")
+sound:Play()
+
+
+-- Основной контейнер
+local container = Instance.new("Frame")
+container.Name = "StatsContainer"
+container.Size = UDim2.new(0, 200, 0, 30)  -- Уменьшил высоту для компактности
+container.Position = UDim2.new(0, 10, 0, 10)
+container.BackgroundTransparency = 0.4  -- Прозрачность 0.7
+container.Parent = gui
+
+-- Скругление углов
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 6)  -- Меньшее скругление
+corner.Parent = container
+
+-- Создаем текстовые элементы
+local function createTextLabel(name, position)
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Name = name
+    textLabel.Size = UDim2.new(0, 80, 0, 30)
+    textLabel.Position = position
+    textLabel.BackgroundTransparency = 1
+    textLabel.Font = Enum.Font.Code  -- Шрифт Code для стиля Roblox
+    textLabel.Text = name .. ": 0"
+    textLabel.TextColor3 = Color3.new(1, 1, 1)  -- Белый текст
+    textLabel.TextSize = 14  -- Чуть меньше размер
+    textLabel.TextXAlignment = Enum.TextXAlignment.Left
+    textLabel.Parent = container
+    return textLabel
+end
+
+local fpsText = createTextLabel("FPS", UDim2.new(0, 10, 0, 0))
+local separator = Instance.new("TextLabel")
+separator.Name = "Separator"
+separator.Size = UDim2.new(0, 10, 0, 30)
+separator.Position = UDim2.new(0, 90, 0, 0)
+separator.BackgroundTransparency = 1
+separator.Font = Enum.Font.Code
+separator.Text = "|"
+separator.TextColor3 = Color3.new(0.7, 0.7, 0.7)  -- Серый разделитель
+separator.TextSize = 14
+separator.Parent = container
+local pingText = createTextLabel("Ping", UDim2.new(0, 110, 0, 0))
+
+-- Анимация цвета (ускоренная)
+local colorTime = 0
+local colorChangeSpeed = 0.4  -- Увеличил скорость перехода
+
+-- Цветовая палитра: черный -> серый -> белый
+local colors = {
+    Color3.new(0, 0, 0),      -- Черный
+    Color3.new(0.3, 0.3, 0.3), -- Темно-серый
+    Color3.new(0.6, 0.6, 0.6), -- Серый
+    Color3.new(1, 1, 1),       -- Белый
+    Color3.new(0.6, 0.6, 0.6), -- Серый
+    Color3.new(0.3, 0.3, 0.3)  -- Темно-серый
+}
+
+game:GetService("RunService").Heartbeat:Connect(function(dt)
+    colorTime = colorTime + dt * colorChangeSpeed
+    
+    -- Циклическая анимация
+    local progress = (math.sin(colorTime) + 1) / 2  -- От 0 до 1
+    local colorIndex = math.floor(progress * (#colors - 1)) + 1
+    local alpha = (progress * (#colors - 1)) % 1
+    
+    -- Плавный переход между цветами
+    container.BackgroundColor3 = colors[colorIndex]:Lerp(colors[colorIndex + 1], alpha)
+end)
+
+-- Логика FPS
+local fps = 0
+local lastTime = os.clock()
+local frameCount = 0
+
+game:GetService("RunService").RenderStepped:Connect(function()
+    frameCount = frameCount + 1
+    local currentTime = os.clock()
+    if currentTime - lastTime >= 1 then
+        fps = math.floor(frameCount / (currentTime - lastTime) + 0.5)
+        frameCount = 0
+        lastTime = currentTime
+        fpsText.Text = "FPS: " .. fps
+    end
+end)
+
+-- Логика Ping
+local function getPing()
+    local stats = game:GetService("Stats")
+    local network = stats and stats:FindFirstChild("Network")
+    if network then
+        return math.floor(network.ServerStatsItem["Data Ping"]:GetValue() + 0.5)
+    end
+    return 0
+end
+
+game:GetService("RunService").Heartbeat:Connect(function()
+    pingText.Text = "Ping: " .. getPing() .. "ms"
+end)
