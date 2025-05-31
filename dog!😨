@@ -1,0 +1,329 @@
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- ESP функции (без изменений)
+local function createESP(model, color)
+    if not model or not model:FindFirstChild("Humanoid") or not model:FindFirstChild("Head") then return end
+    if model:FindFirstChild("BenPlayerESP") then return end
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "BenPlayerESP"
+    highlight.FillTransparency = 0.8
+    highlight.OutlineColor = color
+    highlight.OutlineTransparency = 0
+    highlight.Parent = model
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "ESPInfo"
+    billboard.Size = UDim2.new(0, 150, 0, 40)
+    billboard.Adornee = model.Head
+    billboard.AlwaysOnTop = true
+    billboard.Parent = model
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.Text = model.Name
+    textLabel.TextColor3 = color
+    textLabel.Font = Enum.Font.SourceSansBold
+    textLabel.TextScaled = true
+    textLabel.Parent = billboard
+end
+
+local function removeESP(model)
+    if model:FindFirstChild("BenPlayerESP") then model.BenPlayerESP:Destroy() end
+    if model:FindFirstChild("ESPInfo") then model.ESPInfo:Destroy() end
+end
+
+local function updateNPCsESP()
+    local npcsFolder = Workspace:FindFirstChild("NPCs")
+    if not npcsFolder then return end
+    for _, npc in pairs(npcsFolder:GetChildren()) do
+        if npc:IsA("Model") then
+            createESP(npc, Color3.new(1, 0, 0))
+        end
+    end
+end
+
+local function updatePlayersESP()
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character then
+            createESP(player.Character, Color3.new(0, 1, 0))
+        end
+    end
+end
+
+local function removeAllESP()
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj.Name == "BenPlayerESP" or obj.Name == "ESPInfo" then
+            obj:Destroy()
+        end
+    end
+end
+
+local function hasHammer()
+    local backpack = LocalPlayer:FindFirstChildOfClass("Backpack")
+    local character = LocalPlayer.Character
+    if (backpack and backpack:FindFirstChild("Hammer")) or (character and character:FindFirstChild("Hammer")) then
+        return true
+    end
+    return false
+end
+
+local function killAll()
+    if not hasHammer() then return end
+    local character = LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = character.HumanoidRootPart
+    local hammer = character:FindFirstChild("Hammer") or LocalPlayer.Backpack:FindFirstChild("Hammer")
+    if not hammer or not hammer:IsA("Tool") then return end
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
+            player.Character.HumanoidRootPart.CFrame = hrp.CFrame * CFrame.new(0, 0, -5)
+            hammer:Activate()
+            wait(0.2)
+        end
+    end
+end
+
+-- Телепорт VIP комната (чуть выше)
+local function teleportToVIPRoom()
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    hrp.CFrame = CFrame.new(
+        -1811.92993, 101.753387 + 3, -87.2800064,
+        -1, 0, 0,
+        0, 0, 1,
+        0, 1, 0
+    )
+end
+
+-- Телепорт к модели оружия
+local function teleportToWeaponModel()
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    hrp.CFrame = CFrame.new(
+        -1788.651, 17.5949059, 19.2036133,
+        -3.23057175e-05, -0.707153201, 0.707060337,
+        -1.33812428e-05, 0.707060337, 0.707153201,
+        -1, 1.33812428e-05, -3.23057175e-05
+    )
+end
+
+-- Телепорт к модели скинов
+local function teleportToSkinModel()
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    hrp.CFrame = CFrame.new(
+        -1956.38562, 16.9073524, -349.947937,
+        -4.76837158e-05, 0.0872024298, -0.996190667,
+        2.08243728e-06, 0.996190608, 0.0872024298,
+        1, 2.08243728e-06, -4.76837158e-05
+    )
+end
+
+-- Телепорт к модели ???
+local function teleportToUnknownModel()
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    hrp.CFrame = CFrame.new(
+        -1668.08191, 58.453392, -126.277657,
+        -0.766061664, 0, 0.642767608,
+        0, 1, 0,
+        -0.642767608, 0, -0.766061664
+    )
+end
+
+-- Телепорт к 25 coin из workspace.sfx
+local function teleportTo25Coins()
+    local sfxFolder = Workspace:FindFirstChild("sfx")
+    if not sfxFolder then return end
+    local coins = {}
+    for _, obj in pairs(sfxFolder:GetChildren()) do
+        if obj.Name:lower() == "coin" and obj:IsA("BasePart") then
+            table.insert(coins, obj)
+        end
+    end
+    local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    local count = 0
+    for _, coin in ipairs(coins) do
+        if coin and coin.Parent and count < 25 then
+            hrp.CFrame = coin.CFrame
+            wait(0.3)
+            count = count + 1
+        end
+    end
+end
+
+-- NoClip переменная и функции
+local noClipEnabled = false
+local noClipConnection
+
+local function enableNoClip()
+    local character = LocalPlayer.Character
+    if not character then return end
+    noClipEnabled = true
+    noClipConnection = RunService.Stepped:Connect(function()
+        if noClipEnabled and character then
+            for _, part in pairs(character:GetChildren()) do
+                if part:IsA("BasePart") and part.CanCollide then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end)
+end
+
+local function disableNoClip()
+    noClipEnabled = false
+    if noClipConnection then
+        noClipConnection:Disconnect()
+        noClipConnection = nil
+    end
+    local character = LocalPlayer.Character
+    if not character then return end
+    for _, part in pairs(character:GetChildren()) do
+        if part:IsA("BasePart") then
+            part.CanCollide = true
+        end
+    end
+end
+
+-- Infinite Jump переменная и функции
+local infiniteJumpEnabled = false
+local jumpConnection
+
+local function enableInfiniteJump()
+    if jumpConnection then return end
+    jumpConnection = UserInputService.JumpRequest:Connect(function()
+        if infiniteJumpEnabled then
+            local character = LocalPlayer.Character
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+            end
+        end
+    end)
+    infiniteJumpEnabled = true
+end
+
+local function disableInfiniteJump()
+    infiniteJumpEnabled = false
+    if jumpConnection then
+        jumpConnection:Disconnect()
+        jumpConnection = nil
+    end
+end
+
+-- Создание окна и вкладок
+local Window = Rayfield:CreateWindow({
+    Name = "script dog😨",
+    LoadingTitle = "!vomagla!",
+    ConfigurationSaving = {Enabled = false}
+})
+
+local TabESP = Window:CreateTab("ESP", 4483362458)
+local TabControl = Window:CreateTab("Control", 4483362458)
+local TabAuto = Window:CreateTab("Auto", "refresh-cw")
+local TabTeleport = Window:CreateTab("Телепорт", 4483362458)
+local TabPlayer = Window:CreateTab("Player", 4483362458)
+
+-- ESP Toggle на вкладке ESP
+local espToggle = TabESP:CreateToggle({
+    Name = "Включить ESP (КОГДА БЕН ЩАСПАВНИТЬСЯ esp ВКЛЮЧИ ВЫКЛБЧИ ЧТОБ ЕГО ОТОБРАЖАЛО)",
+    CurrentValue = false,
+    Callback = function(state)
+        if state then
+            updateNPCsESP()
+            updatePlayersESP()
+            local npcsFolder = Workspace:FindFirstChild("NPCs")
+            if npcsFolder then
+                npcsFolder.ChildAdded:Connect(updateNPCsESP)
+                npcsFolder.ChildRemoved:Connect(updateNPCsESP)
+            end
+            Players.PlayerAdded:Connect(updatePlayersESP)
+            Players.PlayerRemoving:Connect(updatePlayersESP)
+        else
+            removeAllESP()
+        end
+    end
+})
+
+-- Kill All Toggle на вкладке Control
+local killAllToggle = TabControl:CreateToggle({
+    Name = "Включить Kill All (НЕОАБОТАЕТ!!!)",
+    CurrentValue = false,
+    Callback = function(state)
+        if state then
+            if not hasHammer() then
+                killAllToggle:Set(false)
+                return
+            end
+            spawn(function()
+                while killAllToggle.CurrentValue do
+                    killAll()
+                    wait(0.5)
+                end
+            end)
+        end
+    end
+})
+
+-- Кнопки на вкладке Телепорт
+TabTeleport:CreateButton({
+    Name = "VIP комната",
+    Callback = teleportToVIPRoom
+})
+
+TabTeleport:CreateButton({
+    Name = "Модель оружия",
+    Callback = teleportToWeaponModel
+})
+
+TabTeleport:CreateButton({
+    Name = "Модель скинов",
+    Callback = teleportToSkinModel
+})
+
+TabTeleport:CreateButton({
+    Name = "Модель ???",
+    Callback = teleportToUnknownModel
+})
+
+TabTeleport:CreateButton({
+    Name = "Телепорт к 25 монетам",
+    Callback = teleportTo25Coins
+})
+
+-- Toggle NoClip на вкладке Player
+TabPlayer:CreateToggle({
+    Name = "Включить NoClip",
+    CurrentValue = false,
+    Callback = function(state)
+        if state then
+            enableNoClip()
+        else
+            disableNoClip()
+        end
+    end
+})
+
+-- Toggle Infinite Jump на вкладке Player
+TabPlayer:CreateToggle({
+    Name = "Включить Infinite Jump",
+    CurrentValue = false,
+    Callback = function(state)
+        if state then
+            enableInfiniteJump()
+        else
+            disableInfiniteJump()
+        end
+    end
+})
