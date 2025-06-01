@@ -1,0 +1,403 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local UserInputService = game:GetService("UserInputService")
+
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+local ESP = {
+    MouseEnabled = false,
+    PlayersEnabled = false,
+    CheeseEnabled = false,
+    HandlesEnabled = false
+}
+
+local function isDescendantOfCharacter(obj)
+    for _, player in ipairs(Players:GetPlayers()) do
+        local character = player.Character
+        if character and character:IsAncestorOf(obj) then
+            return true
+        end
+    end
+    return false
+end
+
+local function highlightMouse()
+    local mouse = workspace:FindFirstChild("Mouse")
+    if mouse and not mouse:FindFirstChild("MouseESP") then
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "MouseESP"
+        highlight.Parent = mouse
+        highlight.FillColor = Color3.fromRGB(255, 0, 0)
+        highlight.FillTransparency = 0.5
+        highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+        highlight.OutlineTransparency = 0
+    elseif not mouse then
+        local oldHighlight = workspace:FindFirstChild("Mouse") and workspace.Mouse:FindFirstChild("MouseESP")
+        if oldHighlight then oldHighlight:Destroy() end
+    end
+end
+
+local function highlightPlayers()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player.Character and player.Character:FindFirstChild("Humanoid") then
+            if not player.Character:FindFirstChild("PlayerESP") then
+                local highlight = Instance.new("Highlight")
+                highlight.Name = "PlayerESP"
+                highlight.Parent = player.Character
+                highlight.FillColor = Color3.fromRGB(0, 255, 0)
+                highlight.FillTransparency = 0.5
+                highlight.OutlineColor = Color3.fromRGB(0, 0, 0)
+                highlight.OutlineTransparency = 0
+            end
+        end
+    end
+end
+
+local function highlightCheese()
+    local cheeseFolder = workspace:FindFirstChild("FindCheese")
+    if cheeseFolder then
+        for _, obj in ipairs(cheeseFolder:GetChildren()) do
+            if obj.Name == "CheeseAdd1" then
+                if not obj:FindFirstChild("CheeseESP") then
+                    local highlight = Instance.new("Highlight")
+                    highlight.Name = "CheeseESP"
+                    highlight.Parent = obj
+                    highlight.FillColor = Color3.fromRGB(255, 255, 0)
+                    highlight.FillTransparency = 0.5
+                    highlight.OutlineColor = Color3.fromRGB(0, 0, 0)
+                    highlight.OutlineTransparency = 0
+                end
+            end
+        end
+    end
+end
+
+local function highlightHandles()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj.Name == "Handle" and obj:IsA("BasePart") then
+            if not isDescendantOfCharacter(obj) then
+                if not obj:FindFirstChild("HandleESP") then
+                    local highlight = Instance.new("Highlight")
+                    highlight.Name = "HandleESP"
+                    highlight.Parent = obj
+                    highlight.FillColor = Color3.fromRGB(0, 0, 255)
+                    highlight.FillTransparency = 0.5
+                    highlight.OutlineColor = Color3.fromRGB(0, 0, 0)
+                    highlight.OutlineTransparency = 0
+                end
+            end
+        end
+    end
+end
+
+local function removeHighlightFromFolder(folder, highlightName)
+    if folder then
+        for _, obj in ipairs(folder:GetChildren()) do
+            local highlight = obj:FindFirstChild(highlightName)
+            if highlight then
+                highlight:Destroy()
+            end
+        end
+    end
+end
+
+local function removeHighlightFromPlayers()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player.Character then
+            local highlight = player.Character:FindFirstChild("PlayerESP")
+            if highlight then highlight:Destroy() end
+        end
+    end
+end
+
+local function removeHighlightFromMouse()
+    local mouse = workspace:FindFirstChild("Mouse")
+    if mouse then
+        local highlight = mouse:FindFirstChild("MouseESP")
+        if highlight then highlight:Destroy() end
+    end
+end
+
+local function removeHighlightFromCheese()
+    local cheeseFolder = workspace:FindFirstChild("FindCheese")
+    removeHighlightFromFolder(cheeseFolder, "CheeseESP")
+end
+
+local function removeHighlightFromHandles()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj.Name == "Handle" and obj:IsA("BasePart") then
+            local highlight = obj:FindFirstChild("HandleESP")
+            if highlight then
+                highlight:Destroy()
+            end
+        end
+    end
+end
+
+RunService.Heartbeat:Connect(function()
+    if ESP.MouseEnabled then
+        highlightMouse()
+    else
+        removeHighlightFromMouse()
+    end
+    if ESP.PlayersEnabled then
+        highlightPlayers()
+    else
+        removeHighlightFromPlayers()
+    end
+    if ESP.CheeseEnabled then
+        highlightCheese()
+    else
+        removeHighlightFromCheese()
+    end
+    if ESP.HandlesEnabled then
+        highlightHandles()
+    else
+        removeHighlightFromHandles()
+    end
+end)
+
+local Window = Rayfield:CreateWindow({
+    Name = "🧀 Cheese Escape 🧀",
+    LoadingTitle = "vomagla",
+    LoadingSubtitle = "СЫР🧀"
+})
+
+local ESPTab = Window:CreateTab("ESP")
+
+ESPTab:CreateToggle({
+    Name = "ESP крысы",
+    CurrentValue = false,
+    Callback = function(value)
+        ESP.MouseEnabled = value
+    end
+})
+
+ESPTab:CreateToggle({
+    Name = "ESP игроков",
+    CurrentValue = false,
+    Callback = function(value)
+        ESP.PlayersEnabled = value
+    end
+})
+
+ESPTab:CreateToggle({
+    Name = "ESP сыра (ноуклипом можете все забрать) ",
+    CurrentValue = false,
+    Callback = function(value)
+        ESP.CheeseEnabled = value
+    end
+})
+
+ESPTab:CreateToggle({
+    Name = "ESP предметов",
+    CurrentValue = false,
+    Callback = function(value)
+        ESP.HandlesEnabled = value
+    end
+})
+
+-- Player Tab
+local noclipEnabled = false
+local infJumpEnabled = false
+local fullBrightEnabled = false
+
+local defaultLightingSettings = {
+    Brightness = Lighting.Brightness,
+    ClockTime = Lighting.ClockTime,
+    FogEnd = Lighting.FogEnd,
+    GlobalShadows = Lighting.GlobalShadows,
+    Ambient = Lighting.Ambient,
+    OutdoorAmbient = Lighting.OutdoorAmbient
+}
+
+local function setNoclip(state)
+    noclipEnabled = state
+end
+
+RunService.Stepped:Connect(function()
+    if noclipEnabled then
+        local character = Players.LocalPlayer.Character
+        if character then
+            for _, part in ipairs(character:GetChildren()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    else
+        local character = Players.LocalPlayer.Character
+        if character then
+            for _, part in ipairs(character:GetChildren()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+    end
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if infJumpEnabled then
+        local humanoid = Players.LocalPlayer.Character and Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+local function setFullBright(enabled)
+    if enabled then
+        defaultLightingSettings.Brightness = Lighting.Brightness
+        defaultLightingSettings.ClockTime = Lighting.ClockTime
+        defaultLightingSettings.FogEnd = Lighting.FogEnd
+        defaultLightingSettings.GlobalShadows = Lighting.GlobalShadows
+        defaultLightingSettings.Ambient = Lighting.Ambient
+        defaultLightingSettings.OutdoorAmbient = Lighting.OutdoorAmbient
+
+        Lighting.Brightness = 1
+        Lighting.ClockTime = 14
+        Lighting.FogEnd = 100000
+        Lighting.GlobalShadows = false
+        Lighting.Ambient = Color3.new(0.8, 0.8, 0.8)
+        Lighting.OutdoorAmbient = Color3.new(0.8, 0.8, 0.8)
+    else
+        Lighting.Brightness = defaultLightingSettings.Brightness
+        Lighting.ClockTime = defaultLightingSettings.ClockTime
+        Lighting.FogEnd = defaultLightingSettings.FogEnd
+        Lighting.GlobalShadows = defaultLightingSettings.GlobalShadows
+        Lighting.Ambient = defaultLightingSettings.Ambient
+        Lighting.OutdoorAmbient = defaultLightingSettings.OutdoorAmbient
+    end
+end
+
+local PlayerTab = Window:CreateTab("Player")
+
+PlayerTab:CreateToggle({
+    Name = "Noclip (проходить сквозь стены)",
+    CurrentValue = false,
+    Callback = function(value)
+        setNoclip(value)
+    end
+})
+
+PlayerTab:CreateToggle({
+    Name = "Бесконечный прыжок",
+    CurrentValue = false,
+    Callback = function(value)
+        infJumpEnabled = value
+    end
+})
+
+PlayerTab:CreateButton({
+    Name = "скорость 36",
+    Callback = function()
+        local character = Players.LocalPlayer.Character
+        if character then
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.WalkSpeed = 36
+            end
+        end
+    end
+})
+
+PlayerTab:CreateToggle({
+    Name = "Full Bright",
+    CurrentValue = false,
+    Callback = function(value)
+        fullBrightEnabled = value
+        setFullBright(value)
+    end
+})
+
+-- Teleport Tab
+local function teleportToCFrame(cframe)
+    local character = Players.LocalPlayer.Character
+    if character and character:FindFirstChild("HumanoidRootPart") then
+        character.HumanoidRootPart.CFrame = cframe
+    end
+end
+
+local TeleportTab = Window:CreateTab("Teleport")
+
+TeleportTab:CreateButton({
+    Name = "Телепорт паркур",
+    Callback = function()
+        local cframe = CFrame.new(35.3099976, 34.2500019, -15.6500015, 0, 0, 1, 0, 1, -0, -1, 0, 0)
+        teleportToCFrame(cframe)
+    end
+})
+
+TeleportTab:CreateButton({
+    Name = "спавн",
+    Callback = function()
+        local cframe = CFrame.new(-53.3899994, 6.05000448, -13.1499929, 1, 0, 0, 0, 1, 0, 0, 0, 1)
+        teleportToCFrame(cframe)
+    end
+})
+
+TeleportTab:CreateButton({
+    Name = "Телепорт к порталам",
+    Callback = function()
+        local cframe = CFrame.new(-21.9909611, 10.1068392, -82.5273743, 0.998547316, 0.00913862977, 0.0531010069, -0.00999225304, 0.999824703, 0.0158323254, -0.0529470146, -0.0163399223, 0.998463631)
+        teleportToCFrame(cframe)
+    end
+})
+
+TeleportTab:CreateButton({
+    Name = "красный сыр",
+    Callback = function()
+        local cframe = CFrame.new(-12.8112183, 5.32002211, -120.237991, -1, 0, 0, 0, 1, 0, 0, 0, -1)
+        teleportToCFrame(cframe)
+    end
+})
+
+TeleportTab:CreateButton({
+    Name = "деревяшка",
+    Callback = function()
+        local cframe = CFrame.new(-200.901642, 1.2932936, -166.903625, 0.913549721, 0, 0.406727046, 0, 1, 0, -0.406727046, 0, 0.913549721)
+        teleportToCFrame(cframe)
+    end
+})
+
+TeleportTab:CreateButton({
+    Name = "??? место",
+    Callback = function()
+        local cframe = CFrame.new(77.8000183, 1.80000401, -460.5, -0.573599219, 0, 0.81913656, 0, 1, 0, -0.81913656, 0, -0.573599219)
+        teleportToCFrame(cframe)
+    end
+})
+TeleportTab:CreateButton({
+    Name = "ключ 1 (зелёный)",
+    Callback = function()
+        local cframe = CFrame.new(-279.601654, 1.29329336, -38.6287994, 0.707060337, -0.707153201, 1.33812428e-05, 1.33812428e-05, 3.23057175e-05, 1, -0.707153201, -0.707060337, 3.23057175e-05)
+        teleportToCFrame(cframe)
+    end
+})
+
+TeleportTab:CreateButton({
+    Name = "ключ 2 (красный)",
+    Callback = function()
+        local cframe = CFrame.new(70.8000183, 1.20000398, -448.399994, -0.707060337, 0.707153201, 1.33812428e-05, -1.33812428e-05, -3.23057175e-05, 1, 0.707153201, 0.707060337, 3.23057175e-05)
+        teleportToCFrame(cframe)
+    end
+})
+
+TeleportTab:CreateButton({
+    Name = "ключ 3 (синий)",
+    Callback = function()
+        local cframe = CFrame.new(-110.590004, 44.5, -91.7500076, 1, 0, 0, 0, 1, 0, 0, 0, 1)
+        teleportToCFrame(cframe)
+    end
+})
+
+TeleportTab:CreateButton({
+    Name = "белый ключ",
+    Callback = function()
+        local cframe = CFrame.new(-20.8197327, 5.15002108, -80.3065872, 0.642762303, -0.766065598, 3.78489494e-06, 3.78489494e-06, 8.10623169e-06, 1, -0.766065598, -0.642762303, 8.10623169e-06)
+        teleportToCFrame(cframe)
+    end
+})
