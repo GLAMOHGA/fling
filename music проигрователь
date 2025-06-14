@@ -1,0 +1,264 @@
+local TweenService = game:GetService("TweenService")
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local gui = playerGui:FindFirstChild("MusicMenuGui")
+if not gui then
+    gui = Instance.new("ScreenGui")
+    gui.Name = "MusicMenuGui"
+    gui.ResetOnSpawn = false
+    gui.Parent = playerGui
+end
+
+local tweenInfo = TweenInfo.new(0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
+local function tweenTransparency(obj, targetBg, targetText, targetImage)
+    local props = {}
+    if obj:IsA("TextButton") or obj:IsA("TextLabel") or obj:IsA("TextBox") then
+        props.BackgroundTransparency = targetBg
+        props.TextTransparency = targetText or 0
+    elseif obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+        props.ImageTransparency = targetImage or targetBg
+    elseif obj:IsA("Frame") then
+        props.BackgroundTransparency = targetBg
+    end
+    local tween = TweenService:Create(obj, tweenInfo, props)
+    tween:Play()
+    return tween
+end
+
+local menu = gui:FindFirstChild("MenuFrame")
+if not menu then
+    menu = Instance.new("Frame", gui)
+    menu.Name = "MenuFrame"
+    menu.Size = UDim2.new(0, 320, 0, 180)
+    menu.Position = UDim2.new(0.5, -160, 0.5, -90)
+    menu.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    menu.BackgroundTransparency = 1
+    menu.Visible = false
+    local menuCorner = Instance.new("UICorner", menu)
+    menuCorner.CornerRadius = UDim.new(0, 18)
+end
+
+local title = menu:FindFirstChild("Title")
+if not title then
+    title = Instance.new("TextLabel", menu)
+    title.Name = "Title"
+    title.Size = UDim2.new(1, -60, 0, 38)
+    title.Position = UDim2.new(0, 30, 0, 6)
+    title.BackgroundTransparency = 1
+    title.BorderSizePixel = 0
+    title.Text = "vomagla sound.hub"
+    title.TextColor3 = Color3.fromRGB(240, 240, 240)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 26
+    title.TextTransparency = 0
+    title.TextXAlignment = Enum.TextXAlignment.Center
+end
+
+local closeBtn = menu:FindFirstChild("CloseButton")
+if not closeBtn then
+    closeBtn = Instance.new("TextButton", menu)
+    closeBtn.Name = "CloseButton"
+    closeBtn.Size = UDim2.new(0, 34, 0, 34)
+    closeBtn.Position = UDim2.new(1, -38, 0, 6)
+    closeBtn.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+    closeBtn.BackgroundTransparency = 0
+    closeBtn.Text = "X"
+    closeBtn.TextColor3 = Color3.new(1,1,1)
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.TextSize = 22
+    closeBtn.TextTransparency = 0
+    local closeCorner = Instance.new("UICorner", closeBtn)
+    closeCorner.CornerRadius = UDim.new(0, 8)
+end
+
+local inputBox = menu:FindFirstChild("InputBox")
+if not inputBox then
+    inputBox = Instance.new("TextBox", menu)
+    inputBox.Name = "InputBox"
+    inputBox.Size = UDim2.new(0.8, 0, 0, 35)
+    inputBox.Position = UDim2.new(0.1, 0, 0, 60)
+    inputBox.PlaceholderText = "Введите ID песни Roblox"
+    inputBox.Text = ""
+    inputBox.TextColor3 = Color3.new(1,1,1)
+    inputBox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    inputBox.BackgroundTransparency = 0.4
+    inputBox.ClearTextOnFocus = false
+    inputBox.Font = Enum.Font.Gotham
+    inputBox.TextSize = 20
+    inputBox.TextTransparency = 0
+    local inputCorner = Instance.new("UICorner", inputBox)
+    inputCorner.CornerRadius = UDim.new(0, 10)
+end
+
+local playBtn = menu:FindFirstChild("PlayButton")
+if not playBtn then
+    playBtn = Instance.new("TextButton", menu)
+    playBtn.Name = "PlayButton"
+    playBtn.Size = UDim2.new(0.35, 0, 0, 45)
+    playBtn.Position = UDim2.new(0.1, 0, 0, 115)
+    playBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 50)
+    playBtn.BackgroundTransparency = 0.2
+    playBtn.Text = "Play"
+    playBtn.TextColor3 = Color3.new(1,1,1)
+    playBtn.Font = Enum.Font.GothamBold
+    playBtn.TextSize = 22
+    playBtn.TextTransparency = 0
+    local playCorner = Instance.new("UICorner", playBtn)
+    playCorner.CornerRadius = UDim.new(0, 12)
+end
+local stopBtn = menu:FindFirstChild("StopButton")
+if not stopBtn then
+    stopBtn = Instance.new("TextButton", menu)
+    stopBtn.Name = "StopButton"
+    stopBtn.Size = UDim2.new(0.35, 0, 0, 45)
+    stopBtn.Position = UDim2.new(0.55, 0, 0, 115)
+    stopBtn.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+    stopBtn.BackgroundTransparency = 0.2
+    stopBtn.Text = "Stop"
+    stopBtn.TextColor3 = Color3.new(1,1,1)
+    stopBtn.Font = Enum.Font.GothamBold
+    stopBtn.TextSize = 22
+    stopBtn.TextTransparency = 0
+    local stopCorner = Instance.new("UICorner", stopBtn)
+    stopCorner.CornerRadius = UDim.new(0, 12)
+end
+
+local toggleBtn = gui:FindFirstChild("ToggleButton")
+if not toggleBtn then
+    toggleBtn = Instance.new("TextButton", gui)
+    toggleBtn.Name = "ToggleButton"
+    toggleBtn.Size = UDim2.new(0, 100, 0, 40)
+    toggleBtn.Position = UDim2.new(0, 15, 0, 15)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    toggleBtn.BackgroundTransparency = 0.2
+    toggleBtn.Text = "open"
+    toggleBtn.TextColor3 = Color3.new(1,1,1)
+    toggleBtn.Font = Enum.Font.GothamBold
+    toggleBtn.TextSize = 20
+    toggleBtn.TextTransparency = 0
+    local toggleCorner = Instance.new("UICorner", toggleBtn)
+    toggleCorner.CornerRadius = UDim.new(0, 10)
+end
+
+local clickSound = gui:FindFirstChild("ClickSound")
+if not clickSound then
+    clickSound = Instance.new("Sound", gui)
+    clickSound.Name = "ClickSound"
+    clickSound.SoundId = "rbxassetid://6655851046"
+    clickSound.Volume = 1
+end
+
+local sound = playerGui:FindFirstChild("MusicSound")
+if not sound then
+    sound = Instance.new("Sound", playerGui)
+    sound.Name = "MusicSound"
+    sound.Volume = 1
+    sound.Looped = true
+end
+
+local menuOpen = false
+
+local function tweenShowMenu()
+    local elements = {menu, title, inputBox, playBtn, stopBtn, closeBtn}
+    menu.Visible = true
+    local tweens = {}
+    for _, obj in pairs(elements) do
+        obj.Visible = true
+        local bg
+        if obj == menu then
+            bg = 0.6
+        elseif obj == inputBox then
+            bg = 0.4
+        elseif obj == playBtn or obj == stopBtn then
+            bg = 0.2
+        else
+            bg = 1
+        end
+        local tween = tweenTransparency(obj, bg, 0, 0)
+        table.insert(tweens, tween)
+    end
+    for _, tween in pairs(tweens) do
+        tween.Completed:Wait()
+    end
+end
+
+local function tweenHideMenu()
+    local elements = {menu, title, inputBox, playBtn, stopBtn, closeBtn}
+    local tweens = {}
+    for _, obj in pairs(elements) do
+        local tween = tweenTransparency(obj, 1, 1, 1)
+        table.insert(tweens, tween)
+    end
+    for _, tween in pairs(tweens) do
+        tween.Completed:Wait()
+    end
+    for _, obj in pairs(elements) do
+        obj.Visible = false
+    end
+    menu.Visible = false
+end
+
+local function openMenu()
+    tweenShowMenu()
+    menuOpen = true
+    clickSound:Play()
+end
+
+local function closeMenu()
+    tweenHideMenu()
+    menuOpen = false
+end
+
+toggleBtn.MouseButton1Click:Connect(function()
+    if menuOpen then
+        closeMenu()
+    else
+        openMenu()
+    end
+end)
+
+closeBtn.MouseButton1Click:Connect(function()
+    closeMenu()
+end)
+
+playBtn.MouseButton1Click:Connect(function()
+    local id = tonumber(inputBox.Text)
+    if id then
+        sound.SoundId = "rbxassetid://" .. id
+        sound:Play()
+    else
+        warn("Введите корректный числовой ID песни")
+    end
+end)
+
+stopBtn.MouseButton1Click:Connect(function()
+    if sound.IsPlaying then
+        sound:Stop()
+    end
+end)
+
+menu.Visible = false
+title.Visible = false
+inputBox.Visible = false
+playBtn.Visible = false
+stopBtn.Visible = false
+closeBtn.Visible = false
+
+menu.BackgroundTransparency = 1
+title.TextTransparency = 1
+inputBox.TextTransparency = 1
+inputBox.BackgroundTransparency = 1
+playBtn.TextTransparency = 1
+playBtn.BackgroundTransparency = 1
+stopBtn.TextTransparency = 1
+stopBtn.BackgroundTransparency = 1
+closeBtn.TextTransparency = 1
+closeBtn.BackgroundTransparency = 1
+
+toggleBtn.Visible = true
+toggleBtn.BackgroundTransparency = 0.2
+toggleBtn.TextTransparency = 0
+
+menuOpen = false
