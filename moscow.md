@@ -32,7 +32,7 @@ local Window = Rayfield:CreateWindow({
 local MainTab = Window:CreateTab("Main", 4483362458)
 
 local NoClipButton = MainTab:CreateButton({
-    Name = "Сделать ноуклип столбы",
+    Name = "Сделать ноуклип столбы (неработает)",
     Callback = function()
         local mapFolder = workspace:FindFirstChild("Map")
         if mapFolder then
