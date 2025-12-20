@@ -771,7 +771,7 @@ function InitializeMainScript()
     Title.Size = UDim2.new(0.7, 0, 1, 0)
     Title.Position = UDim2.new(0.02, 0, 0, 0)
     Title.BackgroundTransparency = 1
-    Title.Text = "⚡ DEATH BALL"
+    Title.Text = "⚡ DEATH BALL https://t.me/vomagla"
     Title.TextColor3 = PurpleColors.Text
     Title.TextSize = 18
     Title.Font = Enum.Font.GothamBold
