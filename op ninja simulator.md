@@ -1,7 +1,3 @@
---чо тут делаешь--
-
--- да я сделал этот скрипт с ии зато все работает и это самый лучший скрипт которые есть на эту игру--
-
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- Ждем загрузки игры
@@ -46,25 +42,17 @@ getgenv().Charms = {
     Outline = Color3.new(0,0,0)
 }
 
--- Безопасная зона (БЕЗ радуги)
-local SafePart = nil
+-- Рандомные безопасные позиции для фриза
+local RandomSafePositions = {
+    CFrame.new(9977.63, 53.59, 10140.89),
+    CFrame.new(9921.72, 186.20, 10175.55),
+    CFrame.new(9874.35, 53.77, 10249.00),
+    CFrame.new(9965.47, 63.13, 10236.10),
+    CFrame.new(9894.93, 57.52, 10187.69)
+}
+
+local currentSafePosition = nil
 local freezeConnection = nil
-pcall(function()
-    SafePart = Instance.new("Part")
-    SafePart.Parent = Workspace
-    SafePart.Anchored = true
-    SafePart.Size = Vector3.new(150, 5, 150)
-    SafePart.CFrame = CFrame.new(9999 + math.random(-500,500), 50, 9999 + math.random(-500,500))
-    SafePart.Material = Enum.Material.ForceField
-    SafePart.CanCollide = true
-    SafePart.BrickColor = BrickColor.new("Bright green")
-    SafePart.Color = Color3.fromRGB(0, 255, 0) -- Фиксированный зеленый цвет
-    
-    local bodyPosition = Instance.new("BodyPosition")
-    bodyPosition.MaxForce = Vector3.new(0, math.huge, 0)
-    bodyPosition.Position = SafePart.Position
-    bodyPosition.Parent = SafePart
-end)
 
 -- Создание GUI
 local Window = Rayfield:CreateWindow({
@@ -155,25 +143,28 @@ MainTab:CreateToggle({
     end
 })
 
--- ТП с заморозкой
+-- ТП с заморозкой 
 MainTab:CreateToggle({
-    Name = "Freeze at Safe Zone (телепорт в безопасную зону)",
+    Name = "Freeze at Random Safe Zone (рандом тп + фриз)",
     CurrentValue = false,
     Flag = "FreezeSafe",
     Callback = function(Value)
         getgenv().Settings.Freeze = Value
-        if Value and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and SafePart then
-            LocalPlayer.Character.HumanoidRootPart.CFrame = SafePart.CFrame + Vector3.new(0, 7, 0)
+        if Value and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            -- Выбираем рандомную позицию
+            currentSafePosition = RandomSafePositions[math.random(1, #RandomSafePositions)]
+            LocalPlayer.Character.HumanoidRootPart.CFrame = currentSafePosition + Vector3.new(0, 7, 0)
+            
             freezeConnection = RunService.Heartbeat:Connect(function()
-                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and getgenv().Settings.Freeze then
                     local hrp = LocalPlayer.Character.HumanoidRootPart
                     hrp.Anchored = true
-                    hrp.CFrame = SafePart.CFrame + Vector3.new(0, 7, 0)
+                    hrp.CFrame = currentSafePosition + Vector3.new(0, 7, 0)
                 end
             end)
             Rayfield:Notify({
-                Title = "Frozen!",
-                Content = "Teleported and FREEZED at safe zone",
+                Title = "Frozen at Random Pos!",
+                Content = "Teleported tosafe zone and FREEZED",
                 Duration = 3
             })
         elseif freezeConnection then
@@ -214,6 +205,34 @@ MainTab:CreateSlider({
 
 -- Player Tab
 local PlayerSec = PlayerTab:CreateSection("Movement")
+
+-- КНОПКА ТЕЛЕПОРТА В CIRCLE ZONE
+PlayerTab:CreateButton({
+    Name = "Teleport Circle Zone",
+    Callback = function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            -- ТП в Circle Zone с поворотом
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(
+                403.721649, 95.5515594, -437.883698,
+                0.603548467, 0.729067206, -0.32278505,
+                -0.75435257, 0.653246284, 0.0649725571,
+                0.258227497, 0.204279661, 0.944239557
+            )
+            Rayfield:Notify({
+                Title = "Teleported!",
+                Content = "To Circle Zone position",
+                Duration = 3
+            })
+        else
+            Rayfield:Notify({
+                Title = "Error!",
+                Content = "Character not found",
+                Duration = 3
+            })
+        end
+    end
+})
+
 PlayerTab:CreateSlider({
     Name = "WalkSpeed", Range = {16, 500}, Increment = 1, Suffix = "Speed", CurrentValue = 16, Flag = "WalkSpeed",
     Callback = function(Value) getgenv().Settings.WalkSpeed = Value end
@@ -263,7 +282,7 @@ VisualTab:CreateToggle({
 })
 
 VisualTab:CreateButton({
-    Name = "Anti Lag (у вас будет загружаться скрипт 10 секунд. ждите)",
+    Name = "актирировать Anti Lag (у вас будет загружаться скрипт 10 секунд. ждите.                                 нажми на эту кнопка чтобы включить анти лаг)",
     Callback = function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/z4tt483/ItzXery.lua/main/AntiLag-ItzXery.lua"))()
         Rayfield:Notify({
@@ -309,11 +328,11 @@ end)
 -- Кредиты
 MiscTab:CreateLabel("Script by vomagla")
 MiscTab:CreateLabel("скрипт создал создатель канала: https://t.me/vomagla")
-MiscTab:CreateLabel("включите авто взятие канаты и авто фарм катана и телепорт в бозопасную зону. для полного авто фарма")
+MiscTab:CreateLabel("включите авто взятие катаны и авто фарм катаны и телепорт в рандомную безопасную зону для полного авто фарма")
 
 Rayfield:Notify({
     Title = "Loaded! ✅",
-    Content = "Op Ninja Simulator by vomagla готово!",
+    Content = "Op Ninja Simulator by vomagla готово! (обновлено)",
     Duration = 4,
     Image = 4483362458
 })
