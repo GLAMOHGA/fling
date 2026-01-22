@@ -282,7 +282,7 @@ VisualTab:CreateToggle({
 })
 
 VisualTab:CreateButton({
-    Name = "актирировать Anti Lag (у вас будет загружаться скрипт 10 секунд. ждите.                                 нажми на эту кнопка чтобы включить анти лаг)",
+    Name = "актирировать Anti Lag. у вас будет черный экран нажмите на слово посередине внизу     нажми на эту кнопка чтобы включить анти лаг)",
     Callback = function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/z4tt483/ItzXery.lua/main/AntiLag-ItzXery.lua"))()
         Rayfield:Notify({
