@@ -51,6 +51,9 @@ local RandomSafePositions = {
     CFrame.new(9894.93, 57.52, 10187.69)
 }
 
+-- НОВАЯ ПОЗИЦИЯ СПАВНА
+local SpawnPosition = CFrame.new(133.63, 157.32, -23.07)
+
 local currentSafePosition = nil
 local freezeConnection = nil
 
@@ -143,7 +146,7 @@ MainTab:CreateToggle({
     end
 })
 
--- ТП с заморозкой 
+-- ТП с заморозкой (ИСПРАВЛЕНО)
 MainTab:CreateToggle({
     Name = "Freeze at Random Safe Zone (рандом тп + фриз)",
     CurrentValue = false,
@@ -164,18 +167,24 @@ MainTab:CreateToggle({
             end)
             Rayfield:Notify({
                 Title = "Frozen at Random Pos!",
-                Content = "Teleported tosafe zone and FREEZED",
+                Content = "Teleported to safe zone and FREEZED",
                 Duration = 3
             })
-        elseif freezeConnection then
-            freezeConnection:Disconnect()
+        else
+            -- ✅ НОВОЕ: При выключении ТП на спавн через 0.5 сек
+            if freezeConnection then
+                freezeConnection:Disconnect()
+                freezeConnection = nil
+            end
             if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
                 LocalPlayer.Character.HumanoidRootPart.Anchored = false
+                task.wait(0.5) -- ✅ Задержка 0.5 сек
+                LocalPlayer.Character.HumanoidRootPart.CFrame = SpawnPosition
             end
             Rayfield:Notify({
-                Title = "Unfrozen!",
-                Content = "Movement restored",
-                Duration = 2
+                Title = "Teleported to Spawn!",
+                Content = "Unfrozen + TP to spawn (133.63, 157.32, -23.07)",
+                Duration = 3
             })
         end
     end
@@ -205,6 +214,27 @@ MainTab:CreateSlider({
 
 -- Player Tab
 local PlayerSec = PlayerTab:CreateSection("Movement")
+
+-- ✅ НОВАЯ КНОПКА ТЕЛЕПОРТА НА СПАВН
+PlayerTab:CreateButton({
+    Name = "Teleport Spawn (133.63, 157.32, -23.07)",
+    Callback = function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+            LocalPlayer.Character.HumanoidRootPart.CFrame = SpawnPosition
+            Rayfield:Notify({
+                Title = "Teleported to Spawn!",
+                Content = "Position: 133.63, 157.32, -23.07",
+                Duration = 3
+            })
+        else
+            Rayfield:Notify({
+                Title = "Error!",
+                Content = "Character not found",
+                Duration = 3
+            })
+        end
+    end
+})
 
 -- КНОПКА ТЕЛЕПОРТА В CIRCLE ZONE
 PlayerTab:CreateButton({
@@ -329,10 +359,11 @@ end)
 MiscTab:CreateLabel("Script by vomagla")
 MiscTab:CreateLabel("скрипт создал создатель канала: https://t.me/vomagla")
 MiscTab:CreateLabel("включите авто взятие катаны и авто фарм катаны и телепорт в рандомную безопасную зону для полного авто фарма")
+MiscTab:CreateLabel("Новая кнопка: Teleport Spawn (133.63, 157.32, -23.07)")
 
 Rayfield:Notify({
     Title = "Loaded! ✅",
-    Content = "Op Ninja Simulator by vomagla готово! (обновлено)",
+    Content = "Op Ninja Simulator by vomagla готово! (обновлено + Spawn TP)",
     Duration = 4,
     Image = 4483362458
 })
