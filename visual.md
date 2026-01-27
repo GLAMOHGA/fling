@@ -49,13 +49,15 @@ local hatEnabled = false
 local trailEnabled = false
 local ffEnabled = false
 local screenEnabled = false
+local animeImageEnabled = false
+local fpsPingEnabled = false
 
 -- Main Tab
 local MainTab = Window:CreateTab("Main", 4483362458)
 
 MainTab:CreateParagraph({
-   Title = "Важная информация",
-   Content = "ВСЕ ФУНКЦИИ ВЕЗУАЛЬНЫ. их некто не видит кроме вас."
+   Title = "Important information",
+   Content = "ALL FUNCTIONS ARE VISUAL ONLY. No one can see them except you."
 })
 
 -- Chinese Hat Tab
@@ -464,10 +466,71 @@ ForceFieldTab:CreateColorPicker({
 -- Other Tab
 local OtherTab = Window:CreateTab("Other", 4483362458)
 
+-- Переменная для хранения FPS/Ping GUI
+local fpsPingGui = nil
+local animeImageGui = nil
+
+-- Функция для активации FPS/Ping счетчика
+local function activateFpsPing()
+   if not fpsPingEnabled then
+      -- Выполняем запрошенный скрипт
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/GLAMOHGA/fling/refs/heads/main/хз%20как%20назвать%20типо%20фпс%20и%20пинг.md"))()
+      fpsPingEnabled = true
+   end
+end
+
+-- Функция для активации/деактивации аниме изображения
+local function toggleAnimeImage(value)
+   animeImageEnabled = value
+   
+   if value then
+      -- Создаем аниме изображение
+      animeImageGui = Instance.new("ScreenGui", player.PlayerGui)
+      animeImageGui.Name = "AnimeImageGui"
+      animeImageGui.ResetOnSpawn = false
+      
+      local imageLabel = Instance.new("ImageLabel", animeImageGui)
+      imageLabel.Name = "AnimeImage"
+      imageLabel.Image = "http://www.roblox.com/asset/?id=117783035423570"
+      imageLabel.Size = UDim2.new(0, 350, 0, 400)
+      imageLabel.Position = UDim2.new(1, -25, 0, 10)
+      imageLabel.AnchorPoint = Vector2.new(1, 0)
+      imageLabel.BackgroundTransparency = 1
+      
+      Rayfield:Notify({
+         Title = "Anime Image",
+         Content = "Anime image activated! --script by vomagla--",
+         Duration = 3,
+         Image = 4483362458
+      })
+   else
+      -- Удаляем аниме изображение
+      if animeImageGui then
+         animeImageGui:Destroy()
+         animeImageGui = nil
+      end
+   end
+end
+
 OtherTab:CreateButton({
-   Name = "FPS/Ping Counter",
+   Name = "Activate FPS/Ping Counter",
    Callback = function()
-      loadstring(game:HttpGet("https://raw.githubusercontent.com/GLAMOHGA/fling/refs/heads/main/fps%20счетчик"))()
+      activateFpsPing()
+      Rayfield:Notify({
+         Title = "FPS/Ping Counter",
+         Content = "FPS and Ping counter activated!",
+         Duration = 3,
+         Image = 4483362458
+      })
+   end
+})
+
+OtherTab:CreateToggle({
+   Name = "Anime Image",
+   CurrentValue = false,
+   Flag = "AnimeImageToggle",
+   Callback = function(value)
+      toggleAnimeImage(value)
    end
 })
 
@@ -504,6 +567,14 @@ player.CharacterAdded:Connect(reapplyVisuals)
 if player.Character then
    reapplyVisuals(player.Character)
 end
+
+-- Автоматически применяем аниме изображение если оно было включено при респавне
+player.CharacterAdded:Connect(function()
+   if animeImageEnabled then
+      task.wait(1)
+      toggleAnimeImage(true)
+   end
+end)
 
 print("Visual Menu Loaded!")
 Rayfield:Notify({
