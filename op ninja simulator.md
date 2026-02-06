@@ -3,24 +3,34 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 -- Ждем загрузки игры
 repeat wait() until game:IsLoaded()
 
+-- СЕРВИСЫ
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
-local VirtualUser = game:GetService("VirtualUser")
 local UserInputService = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
-local Camera = Workspace.CurrentCamera
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local GuiService = game:GetService("GuiService")
 
 -- Глобальные настройки
 getgenv().Settings = {
     AutoSwing = false,
     AutoEquip = false,
+    AutoSpawn = false,
+    
+    -- Новые настройки
+    AutoOpenMenu = false,
+    AutoUpgradeSword = false,
+    AutoUpgradeShuriken = false,
+    AutoUpgradeClass = false,
+    AutoUpgradeAscend = false,
+    
     WhiteScreen = false,
     WalkSpeed = 16,
     JumpPower = 50,
-    Gravity = 196.2,
+    InfiniteJump = false,
     Freeze = false
 }
 
@@ -33,13 +43,6 @@ getgenv().Hitbox = {
 
 getgenv().ESP = {
     Enabled = false
-}
-
-getgenv().Charms = {
-    Enabled = false,
-    TeamColor = false,
-    Color = Color3.new(1,1,1),
-    Outline = Color3.new(0,0,0)
 }
 
 -- Рандомные безопасные позиции для фриза
@@ -57,60 +60,76 @@ local SpawnPosition = CFrame.new(133.63, 157.32, -23.07)
 local currentSafePosition = nil
 local freezeConnection = nil
 
+-- ФУНКЦИЯ ДЛЯ КЛИКА
+local function ClickGuiObject(obj)
+    if obj and obj.Visible then
+        local current = obj
+        while current.Parent and current.Parent ~= game do
+            if current.Parent:IsA("GuiObject") and not current.Parent.Visible then return end
+            if current.Parent:IsA("ScreenGui") and not current.Parent.Enabled then return end
+            current = current.Parent
+        end
+
+        local pos = obj.AbsolutePosition + (obj.AbsoluteSize / 2) + GuiService:GetGuiInset()
+        VirtualInputManager:SendMouseButtonEvent(pos.X, pos.Y, 0, true, game, 1)
+        task.wait(0.05)
+        VirtualInputManager:SendMouseButtonEvent(pos.X, pos.Y, 0, false, game, 1)
+    end
+end
+
+-- Логика Infinite Jump
+UserInputService.JumpRequest:Connect(function()
+    if getgenv().Settings.InfiniteJump then
+        if LocalPlayer.Character then
+            local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if hum then hum:ChangeState("Jumping") end
+        end
+    end
+end)
+
 -- Создание GUI
 local Window = Rayfield:CreateWindow({
     Name = "Op Ninja Simulator",
     LoadingTitle = "здарова спс что подписан на канал vomagla",
     LoadingSubtitle = "by vomagla",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "OpNinja",
-        FileName = "Config"
-    }
+    ConfigurationSaving = { Enabled = true, FolderName = "OpNinja", FileName = "Config" }
 })
 
 -- Вкладки
 local MainTab = Window:CreateTab("Main")
+local AutoTab = Window:CreateTab("Auto")
 local PlayerTab = Window:CreateTab("Player")
 local VisualTab = Window:CreateTab("Visual")
 local MiscTab = Window:CreateTab("Misc")
 
--- Главная вкладка
+-- ==========================================
+-- MAIN TAB
+-- ==========================================
 local MainSec = MainTab:CreateSection("Automation")
 
--- Функция поиска катаны
 local function getKatana()
     for _, tool in pairs(LocalPlayer.Backpack:GetChildren()) do
-        if tool:IsA("Tool") and not table.find({"Shuriken", "InvisibilityTool", "ShadowCloneTool", "TeleportTool"}, tool.Name) then
-            return tool
-        end
+        if tool:IsA("Tool") and not table.find({"Shuriken", "InvisibilityTool", "ShadowCloneTool", "TeleportTool"}, tool.Name) then return tool end
     end
     if LocalPlayer.Character then
         for _, tool in pairs(LocalPlayer.Character:GetChildren()) do
-            if tool:IsA("Tool") and not table.find({"Shuriken", "InvisibilityTool", "ShadowCloneTool", "TeleportTool"}, tool.Name) then
-                return tool
-            end
+            if tool:IsA("Tool") and not table.find({"Shuriken", "InvisibilityTool", "ShadowCloneTool", "TeleportTool"}, tool.Name) then return tool end
         end
     end
     return nil
 end
 
--- Auto Equip Katana
 MainTab:CreateToggle({
     Name = "Auto Equip Katana (авто взятие катаны)",
-    CurrentValue = false,
-    Flag = "AutoEquip",
+    CurrentValue = false, Flag = "AutoEquip",
     Callback = function(Value)
         getgenv().Settings.AutoEquip = Value
         if Value then
             task.spawn(function()
-                repeat
-                    task.wait(1)
+                repeat task.wait(1)
                     if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
                         local katana = getKatana()
-                        if katana and katana.Parent == LocalPlayer.Backpack then
-                            LocalPlayer.Character.Humanoid:EquipTool(katana)
-                        end
+                        if katana and katana.Parent == LocalPlayer.Backpack then LocalPlayer.Character.Humanoid:EquipTool(katana) end
                     end
                 until not getgenv().Settings.AutoEquip
             end)
@@ -118,26 +137,18 @@ MainTab:CreateToggle({
     end
 })
 
--- УЛУЧШЕННЫЙ Auto Swing
 MainTab:CreateToggle({
     Name = "Auto Swing Katana (авто атака фарм катаны)",
-    CurrentValue = false,
-    Flag = "AutoSwing",
+    CurrentValue = false, Flag = "AutoSwing",
     Callback = function(Value)
         getgenv().Settings.AutoSwing = Value
         if Value then
             task.spawn(function()
-                repeat
-                    task.wait()
+                repeat task.wait()
                     local character = LocalPlayer.Character
                     if character then
                         for _, tool in ipairs(character:GetDescendants()) do
-                            if tool:IsA("Tool") then
-                                tool.Enabled = true
-                                pcall(function()
-                                    tool:Activate()
-                                end)
-                            end
+                            if tool:IsA("Tool") then tool.Enabled = true; pcall(function() tool:Activate() end) end
                         end
                     end
                 until not getgenv().Settings.AutoSwing
@@ -146,18 +157,14 @@ MainTab:CreateToggle({
     end
 })
 
--- ТП с заморозкой (ИСПРАВЛЕНО)
 MainTab:CreateToggle({
-    Name = "Freeze at Random Safe Zone (рандом тп + фриз)",
-    CurrentValue = false,
-    Flag = "FreezeSafe",
+    Name = "Freeze at Random Safe Zone",
+    CurrentValue = false, Flag = "FreezeSafe",
     Callback = function(Value)
         getgenv().Settings.Freeze = Value
         if Value and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            -- Выбираем рандомную позицию
             currentSafePosition = RandomSafePositions[math.random(1, #RandomSafePositions)]
             LocalPlayer.Character.HumanoidRootPart.CFrame = currentSafePosition + Vector3.new(0, 7, 0)
-            
             freezeConnection = RunService.Heartbeat:Connect(function()
                 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and getgenv().Settings.Freeze then
                     local hrp = LocalPlayer.Character.HumanoidRootPart
@@ -165,102 +172,172 @@ MainTab:CreateToggle({
                     hrp.CFrame = currentSafePosition + Vector3.new(0, 7, 0)
                 end
             end)
-            Rayfield:Notify({
-                Title = "Frozen at Random Pos!",
-                Content = "Teleported to safe zone and FREEZED",
-                Duration = 3
-            })
+            Rayfield:Notify({Title = "Frozen!", Content = "Teleported to safe zone", Duration = 3})
         else
-            -- ✅ НОВОЕ: При выключении ТП на спавн через 0.5 сек
-            if freezeConnection then
-                freezeConnection:Disconnect()
-                freezeConnection = nil
-            end
+            if freezeConnection then freezeConnection:Disconnect() freezeConnection = nil end
             if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
                 LocalPlayer.Character.HumanoidRootPart.Anchored = false
-                task.wait(0.5) -- ✅ Задержка 0.5 сек
+                task.wait(0.5)
                 LocalPlayer.Character.HumanoidRootPart.CFrame = SpawnPosition
             end
-            Rayfield:Notify({
-                Title = "Teleported to Spawn!",
-                Content = "Unfrozen + TP to spawn (133.63, 157.32, -23.07)",
-                Duration = 3
-            })
+            Rayfield:Notify({Title = "Spawn!", Content = "Teleported back to spawn", Duration = 3})
         end
     end
 })
 
--- Hitbox
 MainTab:CreateToggle({
-    Name = "Hitbox Expander",
-    CurrentValue = false,
-    Flag = "HitboxToggle",
-    Callback = function(Value)
-        getgenv().Hitbox.Enabled = Value
-    end
+    Name = "Hitbox Expander", CurrentValue = false, Flag = "HitboxToggle",
+    Callback = function(Value) getgenv().Hitbox.Enabled = Value end
 })
 
 MainTab:CreateSlider({
-    Name = "Hitbox Size",
-    Range = {3, 100},
-    Increment = 1,
-    Suffix = "Studs",
-    CurrentValue = 30,
-    Flag = "HitboxSize",
+    Name = "Hitbox Size", Range = {3, 100}, Increment = 1, Suffix = "Studs", CurrentValue = 30, Flag = "HitboxSize",
+    Callback = function(Value) getgenv().Hitbox.Size = Value end
+})
+
+-- ==========================================
+-- AUTO TAB
+-- ==========================================
+local AutoSec = AutoTab:CreateSection("Respawn & Upgrades")
+
+AutoTab:CreateToggle({
+    Name = "Auto respawn (Авто нажатие кнопки спавна)",
+    CurrentValue = false, Flag = "AutoSpawn",
     Callback = function(Value)
-        getgenv().Hitbox.Size = Value
+        getgenv().Settings.AutoSpawn = Value
+        if Value then
+            task.spawn(function()
+                while getgenv().Settings.AutoSpawn do
+                    task.wait(1)
+                    local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+                    local btn = pGui and pGui:FindFirstChild("MainGui") and pGui.MainGui:FindFirstChild("SpawnF") and pGui.MainGui.SpawnF:FindFirstChild("RandomSpawnImgBtn")
+                    if btn then ClickGuiObject(btn); task.wait(2) end
+                end
+            end)
+        end
     end
 })
 
--- Player Tab
+AutoTab:CreateLabel("______________________")
+
+AutoTab:CreateToggle({
+    Name = "Auto Open Menu (Каждые 5 сек)",
+    CurrentValue = false, Flag = "AutoOpenMenu",
+    Callback = function(Value)
+        getgenv().Settings.AutoOpenMenu = Value
+        if Value then
+            task.spawn(function()
+                while getgenv().Settings.AutoOpenMenu do
+                    local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+                    local btn = pGui and pGui:FindFirstChild("MainGui") and pGui.MainGui:FindFirstChild("OptionsF") and pGui.MainGui.OptionsF:FindFirstChild("UpgradeBtn")
+                    if btn then ClickGuiObject(btn) end
+                    task.wait(5)
+                end
+            end)
+        end
+    end
+})
+
+AutoTab:CreateToggle({
+    Name = "Auto Upgrade Sword (Каждые 3 сек)",
+    CurrentValue = false, Flag = "AutoUpgradeSword",
+    Callback = function(Value)
+        getgenv().Settings.AutoUpgradeSword = Value
+        if Value then
+            task.spawn(function()
+                while getgenv().Settings.AutoUpgradeSword do
+                    local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+                    local btn = pGui and pGui:FindFirstChild("MainGui") and pGui.MainGui:FindFirstChild("UpgradeF") and pGui.MainGui.UpgradeF:FindFirstChild("SwordF") and pGui.MainGui.UpgradeF.SwordF:FindFirstChild("SwordImgBtn")
+                    if btn then ClickGuiObject(btn) end
+                    task.wait(3)
+                end
+            end)
+        end
+    end
+})
+
+AutoTab:CreateToggle({
+    Name = "Auto Upgrade Shuriken (Каждые 9 сек)",
+    CurrentValue = false, Flag = "AutoUpgradeShuriken",
+    Callback = function(Value)
+        getgenv().Settings.AutoUpgradeShuriken = Value
+        if Value then
+            task.spawn(function()
+                while getgenv().Settings.AutoUpgradeShuriken do
+                    local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+                    local btn = pGui and pGui:FindFirstChild("MainGui") and pGui.MainGui:FindFirstChild("UpgradeF") and pGui.MainGui.UpgradeF:FindFirstChild("ShurikenF") and pGui.MainGui.UpgradeF.ShurikenF:FindFirstChild("ShurikenImgBtn") and pGui.MainGui.UpgradeF.ShurikenF.ShurikenImgBtn:FindFirstChild("UpgradeImg")
+                    if btn then ClickGuiObject(btn) end
+                    task.wait(9)
+                end
+            end)
+        end
+    end
+})
+
+AutoTab:CreateToggle({
+    Name = "Auto Upgrade Class (Каждые 14 сек)",
+    CurrentValue = false, Flag = "AutoUpgradeClass",
+    Callback = function(Value)
+        getgenv().Settings.AutoUpgradeClass = Value
+        if Value then
+            task.spawn(function()
+                while getgenv().Settings.AutoUpgradeClass do
+                    local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+                    local btn = pGui and pGui:FindFirstChild("MainGui") and pGui.MainGui:FindFirstChild("UpgradeF") and pGui.MainGui.UpgradeF:FindFirstChild("ClassF") and pGui.MainGui.UpgradeF.ClassF:FindFirstChild("ClassImgBtn")
+                    if btn then ClickGuiObject(btn) end
+                    task.wait(14)
+                end
+            end)
+        end
+    end
+})
+
+AutoTab:CreateToggle({
+    Name = "Auto Upgrade Ascend (Каждые 43 сек)",
+    CurrentValue = false, Flag = "AutoUpgradeAscend",
+    Callback = function(Value)
+        getgenv().Settings.AutoUpgradeAscend = Value
+        if Value then
+            task.spawn(function()
+                while getgenv().Settings.AutoUpgradeAscend do
+                    local pGui = LocalPlayer:FindFirstChild("PlayerGui")
+                    local btn = pGui and pGui:FindFirstChild("MainGui") and pGui.MainGui:FindFirstChild("UpgradeF") and pGui.MainGui.UpgradeF:FindFirstChild("AscendF") and pGui.MainGui.UpgradeF.AscendF:FindFirstChild("AscendImgBtn")
+                    if btn then ClickGuiObject(btn) end
+                    task.wait(43)
+                end
+            end)
+        end
+    end
+})
+
+-- ==========================================
+-- PLAYER TAB
+-- ==========================================
 local PlayerSec = PlayerTab:CreateSection("Movement")
 
--- ✅ НОВАЯ КНОПКА ТЕЛЕПОРТА НА СПАВН
 PlayerTab:CreateButton({
     Name = "Teleport Spawn (133.63, 157.32, -23.07)",
     Callback = function()
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             LocalPlayer.Character.HumanoidRootPart.CFrame = SpawnPosition
-            Rayfield:Notify({
-                Title = "Teleported to Spawn!",
-                Content = "Position: 133.63, 157.32, -23.07",
-                Duration = 3
-            })
-        else
-            Rayfield:Notify({
-                Title = "Error!",
-                Content = "Character not found",
-                Duration = 3
-            })
+            Rayfield:Notify({Title = "Teleported!", Content = "At Spawn", Duration = 3})
         end
     end
 })
 
--- КНОПКА ТЕЛЕПОРТА В CIRCLE ZONE
 PlayerTab:CreateButton({
     Name = "Teleport Circle Zone",
     Callback = function()
         if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            -- ТП в Circle Zone с поворотом
-            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(
-                403.721649, 95.5515594, -437.883698,
-                0.603548467, 0.729067206, -0.32278505,
-                -0.75435257, 0.653246284, 0.0649725571,
-                0.258227497, 0.204279661, 0.944239557
-            )
-            Rayfield:Notify({
-                Title = "Teleported!",
-                Content = "To Circle Zone position",
-                Duration = 3
-            })
-        else
-            Rayfield:Notify({
-                Title = "Error!",
-                Content = "Character not found",
-                Duration = 3
-            })
+            LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(403.72, 95.55, -437.88, 0.60, 0.72, -0.32, -0.75, 0.65, 0.06, 0.25, 0.20, 0.94)
+            Rayfield:Notify({Title = "Teleported!", Content = "Circle Zone", Duration = 3})
         end
     end
+})
+
+PlayerTab:CreateToggle({
+    Name = "Infinite Jump (Бесконечный прыжок)", CurrentValue = false, Flag = "InfJump",
+    Callback = function(Value) getgenv().Settings.InfiniteJump = Value end
 })
 
 PlayerTab:CreateSlider({
@@ -271,17 +348,14 @@ PlayerTab:CreateSlider({
     Name = "Jump Power", Range = {50, 500}, Increment = 1, Suffix = "Power", CurrentValue = 50, Flag = "JumpPower",
     Callback = function(Value) getgenv().Settings.JumpPower = Value end
 })
-PlayerTab:CreateSlider({
-    Name = "Gravity", Range = {0, 196.2}, Increment = 0.1, Suffix = "Gravity", CurrentValue = 196.2, Flag = "Gravity",
-    Callback = function(Value) getgenv().Settings.Gravity = Value end
-})
 
--- Visual Tab - ESP
+-- ==========================================
+-- VISUAL TAB
+-- ==========================================
 local VisualSec = VisualTab:CreateSection("ESP")
 VisualTab:CreateToggle({
     Name = "Player ESP (Highlights)",
-    CurrentValue = false,
-    Flag = "ESP",
+    CurrentValue = false, Flag = "ESP",
     Callback = function(Value)
         getgenv().ESP.Enabled = Value
         if Value then
@@ -303,11 +377,18 @@ VisualTab:CreateToggle({
             end)
         else
             for _, player in ipairs(Players:GetPlayers()) do
-                if player.Character and player.Character:FindFirstChild("ESPHighlight") then
-                    player.Character.ESPHighlight:Destroy()
-                end
+                if player.Character and player.Character:FindFirstChild("ESPHighlight") then player.Character.ESPHighlight:Destroy() end
             end
         end
+    end
+})
+
+-- НОВАЯ КНОПКА ANTI AFK
+VisualTab:CreateButton({
+    Name = "anti afk",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/GLAMOHGA/fling/refs/heads/main/ANTI%20AFK.md"))()
+        Rayfield:Notify({Title = "Anti AFK", Content = "Activated! (by vomagla)", Duration = 3})
     end
 })
 
@@ -315,12 +396,7 @@ VisualTab:CreateButton({
     Name = "актирировать Anti Lag. у вас будет черный экран нажмите на слово посередине внизу     нажми на эту кнопка чтобы включить анти лаг)",
     Callback = function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/z4tt483/ItzXery.lua/main/AntiLag-ItzXery.lua"))()
-        Rayfield:Notify({
-            Title = "Anti Lag",
-            Content = "Activated! (ItzXery)",
-            Duration = 3,
-            Image = 4483362458
-        })
+        Rayfield:Notify({Title = "Anti Lag", Content = "Activated! (ItzXery)", Duration = 3})
     end
 })
 
@@ -332,7 +408,6 @@ RunService.Heartbeat:Connect(function()
         hum.JumpPower = getgenv().Settings.JumpPower
         if not hum.UseJumpPower then hum.UseJumpPower = true end
     end
-    Workspace.Gravity = getgenv().Settings.Gravity
 end)
 
 -- Hitbox
@@ -359,11 +434,21 @@ end)
 MiscTab:CreateLabel("Script by vomagla")
 MiscTab:CreateLabel("скрипт создал создатель канала: https://t.me/vomagla")
 MiscTab:CreateLabel("включите авто взятие катаны и авто фарм катаны и телепорт в рандомную безопасную зону для полного авто фарма")
-MiscTab:CreateLabel("Новая кнопка: Teleport Spawn (133.63, 157.32, -23.07)")
 
 Rayfield:Notify({
-    Title = "Loaded! ✅",
-    Content = "Op Ninja Simulator by vomagla готово! (обновлено + Spawn TP)",
+    Title = "АНТИ АФК ВО ВКЛАДКЕ visual✅",
+    Content = "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1!",
     Duration = 4,
     Image = 4483362458
 })
+
+-- 5 СООБЩЕНИЙ ПРИ СТАРТЕ
+for i = 1, 5 do
+    Rayfield:Notify({
+        Title = "ВАЖНО!!!",
+        Content = "НЕЗАБУДЬ ВКЛЮЧИТЬ АНТИ АФК!!!!!!!!!!!!!!!!!!!!!",
+        Duration = 5,
+        Image = 4483362458
+    })
+    task.wait(0.3)
+end
