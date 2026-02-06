@@ -60,9 +60,12 @@ local SpawnPosition = CFrame.new(133.63, 157.32, -23.07)
 local currentSafePosition = nil
 local freezeConnection = nil
 
--- ФУНКЦИЯ ДЛЯ КЛИКА
+-- ==================================================================
+-- ИСПРАВЛЕННАЯ ФУНКЦИЯ КЛИКА (ДЛЯ ТЕЛЕФОНОВ)
+-- ==================================================================
 local function ClickGuiObject(obj)
     if obj and obj.Visible then
+        -- Проверка: не скрыта ли кнопка в родительских папках
         local current = obj
         while current.Parent and current.Parent ~= game do
             if current.Parent:IsA("GuiObject") and not current.Parent.Visible then return end
@@ -70,12 +73,40 @@ local function ClickGuiObject(obj)
             current = current.Parent
         end
 
-        local pos = obj.AbsolutePosition + (obj.AbsoluteSize / 2) + GuiService:GetGuiInset()
+        -- СПОСОБ 1: Прямая активация (Работает идеально на Delta/Arceus/Fluxus)
+        -- Это заставляет игру думать, что кнопка нажата, даже не кликая мышкой
+        local success, _ = pcall(function()
+            if getconnections then
+                for _, conn in pairs(getconnections(obj.MouseButton1Click)) do conn:Fire() end
+                for _, conn in pairs(getconnections(obj.Activated)) do conn:Fire() end
+                return true
+            end
+        end)
+        
+        -- Если способ 1 сработал, выходим. Если нет - пробуем кликнуть физически.
+        if success then 
+            task.wait(0.1) -- Маленькая задержка
+        end
+
+        -- СПОСОБ 2: Физический клик (Исправлено для МОБАЙЛА)
+        -- На телефонах координаты AbsolutePosition обычно верные БЕЗ GuiInset
+        local pos = obj.AbsolutePosition + (obj.AbsoluteSize / 2)
+        
         VirtualInputManager:SendMouseButtonEvent(pos.X, pos.Y, 0, true, game, 1)
         task.wait(0.05)
         VirtualInputManager:SendMouseButtonEvent(pos.X, pos.Y, 0, false, game, 1)
+        
+        -- СПОСОБ 3: Если это ПК (клавиатура/мышь), пробуем кликнуть с учетом полоски меню
+        if not UserInputService.TouchEnabled then
+            local inset = GuiService:GetGuiInset()
+            local posWithInset = pos + inset
+            VirtualInputManager:SendMouseButtonEvent(posWithInset.X, posWithInset.Y, 0, true, game, 1)
+            task.wait(0.05)
+            VirtualInputManager:SendMouseButtonEvent(posWithInset.X, posWithInset.Y, 0, false, game, 1)
+        end
     end
 end
+-- ==================================================================
 
 -- Логика Infinite Jump
 UserInputService.JumpRequest:Connect(function()
