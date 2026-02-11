@@ -14,14 +14,6 @@ StarterGui:SetCore("SendNotification", {
 })
 
 
-task.wait(8)
-StarterGui:SetCore("SendNotification", {
-    Title = "❗",
-    Text = "leaked by .gg/sleepyhub if you dont listen to king vyylora you gotta face the consequences",
-    Duration = 8, -- seconds the notification stays on screen
-    Button1 = "Got it"
-})
-
 if LPH_OBFUSCATED == nil then
     local assert = assert
     local type = type
@@ -71,10 +63,8 @@ if LPH_OBFUSCATED == nil then
         )
     end
     LPH_CRASH = function(...)
-        assert(#{...} == 0, "LPH_CRASH does not accept any arguments.")
-        game:Shutdown()
-        while true do end
-    end
+    return -- Просто ничего не делаем
+end
     LRM_IsUserPremium = false
     LRM_LinkedDiscordID = "0"
     LRM_ScriptName = "bronx.lol"
@@ -256,12 +246,6 @@ do
 end;
 
 local FireServer, InvokeServer, UnreliableFireServer = Instance.new("RemoteEvent").FireServer, Instance.new("RemoteFunction").InvokeServer, Instance.new("UnreliableRemoteEvent").FireServer
-
-if isfunctionhooked then
-    if isfunctionhooked(FireServer) or isfunctionhooked(UnreliableFireServer) or isfunctionhooked(InvokeServer) and LPH_OBFUSCATED then
-        return Services.LocalPlayer:Kick("bronx.lol | Security : You are running another script, please disable it and execute again")
-    end
-end
 
 local SafePosition = CFrame.new(-437, 33, 6653)
 
@@ -821,12 +805,6 @@ if not Solara then
 			"hookmetamethod",
 			"getrenv",
 		}
-
-		for _, v in next, Required do
-			if not getgenv()[v] then
-				game:GetService("Players").LocalPlayer:Kick(`Your executor does not support [{v}], which is REQUIRED to use the BlockSpin script.`)
-			end
-		end
 
 		local OldDebugTraceback, OldDebugInfo, OldFenv = debug.traceback, debug.info, getfenv
 
