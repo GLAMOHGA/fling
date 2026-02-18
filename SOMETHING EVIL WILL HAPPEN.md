@@ -1,5 +1,12 @@
 local WindUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Footagesus/WindUI/main/dist/main.lua"))()
 
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Lighting = game:GetService("Lighting")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+
 local Settings = {
     InfJump = false,
     TPWalk = false,
@@ -7,22 +14,29 @@ local Settings = {
     ESP = false,
     NameESP = false,
     HealthESP = false,
-    AntiRagdoll = false
+    AntiRagdoll = false,
+    AntiFallDamage = false
 }
 
-local RunService = game:GetService("RunService")
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Lighting = game:GetService("Lighting")
-local UserInputService = game:GetService("UserInputService")
+local espHighlights = {}
+local espNames = {}
+local espHealth = {}
+local antiRagdollConnection = nil
+local antiRagdollStateConnection = nil
+local antiFallDamageConnection = nil
+local antiFallIsFrozen = false
+local currentSky = nil
 
+-- === WINDOW ===
 local Window = WindUI:CreateWindow({
     Title = "SOMETHING EVIL WILL HAPPEN",
     Subtitle = "by vomagla",
     Icon = "rbxassetid://117783035423570",
     Transparent = true,
     Theme = "Dark",
-    Folder = "SomethingEvilConfig"
+    Folder = "SomethingEvilConfig",
+    Size = UDim2.new(0, 480, 0, 340),
+    ToggleKey = Enum.KeyCode.RightControl
 })
 
 local Tabs = {
@@ -31,218 +45,184 @@ local Tabs = {
     Player = Window:Tab({ Title = "Player", Icon = "user" })
 }
 
--- === TPWalk with Raycast ===
-RunService.Heartbeat:Connect(function()
-    if Settings.TPWalk then
-        local char = LocalPlayer.Character
-        if not char then return end
-        local hum = char:FindFirstChild("Humanoid")
-        local root = char:FindFirstChild("HumanoidRootPart")
-        if not hum or not root then return end
-        if hum.MoveDirection.Magnitude > 0 then
-            local direction = hum.MoveDirection * Settings.TPSpeed
-            local rayParams = RaycastParams.new()
-            rayParams.FilterType = Enum.RaycastFilterType.Exclude
-            rayParams.FilterDescendantsInstances = {char}
-            local rayResult = workspace:Raycast(root.Position, direction.Unit * (direction.Magnitude + 3), rayParams)
-            if not rayResult then
-                root.CFrame = root.CFrame + direction
-            end
-            root.Velocity = Vector3.new(0, root.Velocity.Y, 0)
-        end
-    end
-end)
+-- ==================== UTILITY ====================
 
--- === Infinite Jump ===
-UserInputService.JumpRequest:Connect(function()
-    if Settings.InfJump then
-        local char = LocalPlayer.Character
-        if not char then return end
-        local hum = char:FindFirstChild("Humanoid")
-        if hum then
-            hum:ChangeState("Jumping")
-        end
-    end
-end)
-
--- === ESP Storage ===
-local espHighlights = {}
-local espNames = {}
-local espHealth = {}
-
-local function clearESP(player)
-    if espHighlights[player] then
-        espHighlights[player]:Destroy()
-        espHighlights[player] = nil
-    end
+local function getChar()
+    return LocalPlayer.Character
 end
 
-local function clearNameESP(player)
-    if espNames[player] then
-        espNames[player]:Destroy()
-        espNames[player] = nil
-    end
+local function getHumanoid(char)
+    return char and char:FindFirstChild("Humanoid")
 end
 
-local function clearHealthESP(player)
-    if espHealth[player] then
-        espHealth[player]:Destroy()
-        espHealth[player] = nil
+local function getRoot(char)
+    return char and char:FindFirstChild("HumanoidRootPart")
+end
+
+local function getHead(char)
+    return char and char:FindFirstChild("Head")
+end
+
+-- ==================== ESP ====================
+
+local function destroyInstance(tbl, key)
+    local obj = tbl[key]
+    if obj then
+        obj:Destroy()
+        tbl[key] = nil
     end
 end
 
 local function clearAllESP(player)
-    clearESP(player)
-    clearNameESP(player)
-    clearHealthESP(player)
+    destroyInstance(espHighlights, player)
+    destroyInstance(espNames, player)
+    destroyInstance(espHealth, player)
 end
 
--- === Create ESP for a player ===
-local function updateESPForPlayer(player)
+local function updateESP(player)
     if player == LocalPlayer then return end
     local char = player.Character
     if not char then
         clearAllESP(player)
         return
     end
-    local humanoid = char:FindFirstChild("Humanoid")
-    local head = char:FindFirstChild("Head")
-    local rootPart = char:FindFirstChild("HumanoidRootPart")
 
-    -- CHAMS ESP
+    local humanoid = getHumanoid(char)
+    local head = getHead(char)
+    local root = getRoot(char)
+    local adornee = head or root
+
     if Settings.ESP then
-        if not espHighlights[player] or not espHighlights[player].Parent then
-            clearESP(player)
-            local highlight = Instance.new("Highlight")
-            highlight.Name = "EvilESP"
-            highlight.FillColor = Color3.fromRGB(255, 255, 255)
-            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-            highlight.FillTransparency = 0.5
-            highlight.OutlineTransparency = 0
-            highlight.Adornee = char
-            highlight.Parent = game:GetService("CoreGui")
-            espHighlights[player] = highlight
+        local hl = espHighlights[player]
+        if not hl or not hl.Parent then
+            destroyInstance(espHighlights, player)
+            hl = Instance.new("Highlight")
+            hl.Name = "EvilESP"
+            hl.FillColor = Color3.new(1, 1, 1)
+            hl.OutlineColor = Color3.new(1, 1, 1)
+            hl.FillTransparency = 0.5
+            hl.OutlineTransparency = 0
+            hl.Adornee = char
+            hl.Parent = CoreGui
+            espHighlights[player] = hl
         else
-            espHighlights[player].Adornee = char
+            hl.Adornee = char
         end
     else
-        clearESP(player)
+        destroyInstance(espHighlights, player)
     end
 
-    -- NAME ESP
-    if Settings.NameESP then
-        if not espNames[player] or not espNames[player].Parent then
-            clearNameESP(player)
-            local bbg = Instance.new("BillboardGui")
+    if Settings.NameESP and adornee then
+        local bbg = espNames[player]
+        local displayText = player.DisplayName .. " (@" .. player.Name .. ")"
+        if not bbg or not bbg.Parent then
+            destroyInstance(espNames, player)
+            bbg = Instance.new("BillboardGui")
             bbg.Name = "EvilNameESP"
-            bbg.Size = UDim2.new(0, 200, 0, 40)
+            bbg.Size = UDim2.new(0, 150, 0, 25)
             bbg.StudsOffset = Vector3.new(0, 3.5, 0)
             bbg.AlwaysOnTop = true
             bbg.MaxDistance = 1000
-            bbg.Adornee = head or rootPart
-            bbg.Parent = game:GetService("CoreGui")
+            bbg.Adornee = adornee
+            bbg.Parent = CoreGui
 
             local label = Instance.new("TextLabel")
-            label.Name = "NameLabel"
+            label.Name = "L"
             label.Size = UDim2.new(1, 0, 1, 0)
             label.BackgroundTransparency = 1
-            label.Text = player.DisplayName .. " (@" .. player.Name .. ")"
-            label.TextColor3 = Color3.fromRGB(255, 255, 255)
+            label.Text = displayText
+            label.TextColor3 = Color3.new(1, 1, 1)
             label.TextStrokeTransparency = 0
-            label.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-            label.TextScaled = true
+            label.TextStrokeColor3 = Color3.new(0, 0, 0)
+            label.TextScaled = false
+            label.TextSize = 13
             label.Font = Enum.Font.GothamBold
             label.Parent = bbg
 
             espNames[player] = bbg
         else
-            espNames[player].Adornee = head or rootPart
-            local label = espNames[player]:FindFirstChild("NameLabel")
-            if label then
-                label.Text = player.DisplayName .. " (@" .. player.Name .. ")"
-            end
+            bbg.Adornee = adornee
+            local label = bbg:FindFirstChild("L")
+            if label then label.Text = displayText end
         end
     else
-        clearNameESP(player)
+        destroyInstance(espNames, player)
     end
 
-    -- HEALTH ESP
-    if Settings.HealthESP and humanoid then
-        if not espHealth[player] or not espHealth[player].Parent then
-            clearHealthESP(player)
-            local bbg = Instance.new("BillboardGui")
+    if Settings.HealthESP and humanoid and adornee then
+        local bbg = espHealth[player]
+        local hpText = math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
+        if not bbg or not bbg.Parent then
+            destroyInstance(espHealth, player)
+            bbg = Instance.new("BillboardGui")
             bbg.Name = "EvilHealthESP"
-            bbg.Size = UDim2.new(0, 200, 0, 30)
+            bbg.Size = UDim2.new(0, 150, 0, 20)
             bbg.StudsOffset = Vector3.new(0, 2.5, 0)
             bbg.AlwaysOnTop = true
             bbg.MaxDistance = 1000
-            bbg.Adornee = head or rootPart
-            bbg.Parent = game:GetService("CoreGui")
+            bbg.Adornee = adornee
+            bbg.Parent = CoreGui
 
-            local hpLabel = Instance.new("TextLabel")
-            hpLabel.Name = "HPLabel"
-            hpLabel.Size = UDim2.new(1, 0, 1, 0)
-            hpLabel.BackgroundTransparency = 1
-            hpLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-            hpLabel.TextStrokeTransparency = 0
-            hpLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-            hpLabel.TextScaled = true
-            hpLabel.Font = Enum.Font.GothamBold
-            hpLabel.Text = math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
-            hpLabel.Parent = bbg
+            local label = Instance.new("TextLabel")
+            label.Name = "L"
+            label.Size = UDim2.new(1, 0, 1, 0)
+            label.BackgroundTransparency = 1
+            label.TextColor3 = Color3.new(0, 1, 0)
+            label.TextStrokeTransparency = 0
+            label.TextStrokeColor3 = Color3.new(0, 0, 0)
+            label.TextScaled = false
+            label.TextSize = 12
+            label.Font = Enum.Font.GothamBold
+            label.Text = hpText
+            label.Parent = bbg
 
             espHealth[player] = bbg
         else
-            espHealth[player].Adornee = head or rootPart
-            local hpLabel = espHealth[player]:FindFirstChild("HPLabel")
-            if hpLabel and humanoid then
-                hpLabel.Text = math.floor(humanoid.Health) .. " / " .. math.floor(humanoid.MaxHealth)
-            end
+            bbg.Adornee = adornee
+            local label = bbg:FindFirstChild("L")
+            if label then label.Text = hpText end
         end
     else
-        clearHealthESP(player)
+        destroyInstance(espHealth, player)
     end
 end
 
--- === ESP Update Loop ===
-RunService.RenderStepped:Connect(function()
-    for _, player in pairs(Players:GetPlayers()) do
-        updateESPForPlayer(player)
-    end
-end)
+-- ==================== ANTI-RAGDOLL ====================
 
--- === Clean up ESP when player leaves ===
-Players.PlayerRemoving:Connect(function(player)
-    clearAllESP(player)
-end)
-
--- === Anti-Ragdoll ===
-local antiRagdollConnection = nil
-local antiRagdollStateConnection = nil
+local ragdollStates = {
+    Enum.HumanoidStateType.Ragdoll,
+    Enum.HumanoidStateType.FallingDown,
+    Enum.HumanoidStateType.Physics
+}
 
 local function setupAntiRagdoll(character)
-    if antiRagdollConnection then
-        antiRagdollConnection:Disconnect()
-        antiRagdollConnection = nil
-    end
-    if antiRagdollStateConnection then
-        antiRagdollStateConnection:Disconnect()
-        antiRagdollStateConnection = nil
-    end
+    if antiRagdollConnection then antiRagdollConnection:Disconnect() end
+    if antiRagdollStateConnection then antiRagdollStateConnection:Disconnect() end
+
     local humanoid = character:WaitForChild("Humanoid", 5)
     if not humanoid then return end
-    humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
-    humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-    humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+
+    local function disableRagdollStates()
+        for _, state in ipairs(ragdollStates) do
+            humanoid:SetStateEnabled(state, false)
+        end
+    end
+
+    disableRagdollStates()
+
     antiRagdollConnection = RunService.Heartbeat:Connect(function()
         if not Settings.AntiRagdoll then return end
-        if not character or not character.Parent then return end
-        if not humanoid or humanoid.Health <= 0 then return end
+        if not character.Parent or humanoid.Health <= 0 then return end
+
         local state = humanoid:GetState()
-        if state == Enum.HumanoidStateType.Ragdoll or state == Enum.HumanoidStateType.FallingDown or state == Enum.HumanoidStateType.Physics then
-            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        for _, rs in ipairs(ragdollStates) do
+            if state == rs then
+                humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+                break
+            end
         end
-        for _, v in pairs(character:GetDescendants()) do
+
+        for _, v in ipairs(character:GetDescendants()) do
             if v:IsA("BallSocketConstraint") and v.Name == "RagdollConstraint" then
                 v:Destroy()
             elseif v:IsA("Motor6D") then
@@ -251,36 +231,88 @@ local function setupAntiRagdoll(character)
                 v:Destroy()
             end
         end
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-        humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+
+        disableRagdollStates()
     end)
-    antiRagdollStateConnection = humanoid.StateChanged:Connect(function(oldState, newState)
+
+    antiRagdollStateConnection = humanoid.StateChanged:Connect(function(_, newState)
         if not Settings.AntiRagdoll then return end
-        if newState == Enum.HumanoidStateType.Ragdoll or newState == Enum.HumanoidStateType.FallingDown or newState == Enum.HumanoidStateType.Physics then
-            humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+        for _, rs in ipairs(ragdollStates) do
+            if newState == rs then
+                humanoid:ChangeState(Enum.HumanoidStateType.GettingUp)
+                return
+            end
         end
     end)
 end
 
-LocalPlayer.CharacterAdded:Connect(function(character)
-    if Settings.AntiRagdoll then
-        setupAntiRagdoll(character)
-    end
-end)
+-- ==================== ANTI FALL DAMAGE ====================
 
--- === Custom Sky ===
-local currentSky = nil
+local FALL_SPEED_THRESHOLD = 85
+local DISTANCE_THRESHOLD = 7
+local FREEZE_DURATION = 0.1
+
+local function freezeCharacter(rootPart)
+    if antiFallIsFrozen then return end
+    antiFallIsFrozen = true
+
+    rootPart.AssemblyLinearVelocity = Vector3.zero
+
+    local pos = rootPart.Position
+
+    local bp = Instance.new("BodyPosition")
+    bp.Position = pos
+    bp.MaxForce = Vector3.new(1e9, 1e9, 1e9)
+    bp.D = 500
+    bp.P = 10000
+    bp.Parent = rootPart
+
+    local bg = Instance.new("BodyGyro")
+    bg.MaxTorque = Vector3.new(1e9, 1e9, 1e9)
+    bg.D = 500
+    bg.P = 10000
+    bg.Parent = rootPart
+
+    task.wait(FREEZE_DURATION)
+    bp:Destroy()
+    bg:Destroy()
+    task.wait(0.5)
+    antiFallIsFrozen = false
+end
+
+local function setupAntiFallDamage()
+    if antiFallDamageConnection then antiFallDamageConnection:Disconnect() end
+
+    local rayParams = RaycastParams.new()
+    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+    local downRay = Vector3.new(0, -500, 0)
+
+    antiFallDamageConnection = RunService.Heartbeat:Connect(function()
+        if not Settings.AntiFallDamage or antiFallIsFrozen then return end
+
+        local char = getChar()
+        if not char then return end
+        local root = getRoot(char)
+        local hum = getHumanoid(char)
+        if not root or not hum or hum.Health <= 0 then return end
+
+        local fallSpeed = -root.AssemblyLinearVelocity.Y
+        if fallSpeed < FALL_SPEED_THRESHOLD then return end
+
+        rayParams.FilterDescendantsInstances = {char}
+        local result = workspace:Raycast(root.Position, downRay, rayParams)
+        if result and (root.Position - result.Position).Magnitude <= DISTANCE_THRESHOLD then
+            task.spawn(freezeCharacter, root)
+        end
+    end)
+end
+
+-- ==================== SKY ====================
 
 local function applySky(skyData)
-    if currentSky then
-        currentSky:Destroy()
-        currentSky = nil
-    end
-    for _, v in pairs(Lighting:GetChildren()) do
-        if v:IsA("Sky") then
-            v:Destroy()
-        end
+    if currentSky then currentSky:Destroy() end
+    for _, v in ipairs(Lighting:GetChildren()) do
+        if v:IsA("Sky") then v:Destroy() end
     end
     local s = Instance.new("Sky")
     for k, v in pairs(skyData) do
@@ -291,20 +323,57 @@ local function applySky(skyData)
 end
 
 local function removeSky()
-    if currentSky then
-        currentSky:Destroy()
-        currentSky = nil
-    end
-    for _, v in pairs(Lighting:GetChildren()) do
-        if v:IsA("Sky") then
-            v:Destroy()
-        end
+    if currentSky then currentSky:Destroy(); currentSky = nil end
+    for _, v in ipairs(Lighting:GetChildren()) do
+        if v:IsA("Sky") then v:Destroy() end
     end
 end
 
--- =============================================
--- === UI ELEMENTS ===
--- =============================================
+-- ==================== CONNECTIONS ====================
+
+RunService.Heartbeat:Connect(function()
+    if not Settings.TPWalk then return end
+    local char = getChar()
+    if not char then return end
+    local hum = getHumanoid(char)
+    local root = getRoot(char)
+    if not hum or not root then return end
+    if hum.MoveDirection.Magnitude == 0 then return end
+
+    local direction = hum.MoveDirection * Settings.TPSpeed
+    local rayParams = RaycastParams.new()
+    rayParams.FilterType = Enum.RaycastFilterType.Exclude
+    rayParams.FilterDescendantsInstances = {char}
+
+    if not workspace:Raycast(root.Position, direction.Unit * (direction.Magnitude + 3), rayParams) then
+        root.CFrame = root.CFrame + direction
+    end
+    root.Velocity = Vector3.new(0, root.Velocity.Y, 0)
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if not Settings.InfJump then return end
+    local hum = getHumanoid(getChar())
+    if hum then hum:ChangeState("Jumping") end
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not Settings.ESP and not Settings.NameESP and not Settings.HealthESP then return end
+    for _, player in ipairs(Players:GetPlayers()) do
+        updateESP(player)
+    end
+end)
+
+Players.PlayerRemoving:Connect(clearAllESP)
+
+LocalPlayer.CharacterAdded:Connect(function(character)
+    antiFallIsFrozen = false
+    if Settings.AntiRagdoll then
+        setupAntiRagdoll(character)
+    end
+end)
+
+-- ==================== UI ELEMENTS ====================
 
 -- >> MAIN TAB <<
 Tabs.Main:Toggle({
@@ -313,27 +382,42 @@ Tabs.Main:Toggle({
     Callback = function(Value)
         Settings.AntiRagdoll = Value
         if Value then
-            if LocalPlayer.Character then
-                setupAntiRagdoll(LocalPlayer.Character)
-            end
+            local char = getChar()
+            if char then setupAntiRagdoll(char) end
         else
-            if antiRagdollConnection then
-                antiRagdollConnection:Disconnect()
-                antiRagdollConnection = nil
-            end
-            if antiRagdollStateConnection then
-                antiRagdollStateConnection:Disconnect()
-                antiRagdollStateConnection = nil
-            end
-            if LocalPlayer.Character then
-                local hum = LocalPlayer.Character:FindFirstChild("Humanoid")
-                if hum then
-                    hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
-                    hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
-                    hum:SetStateEnabled(Enum.HumanoidStateType.Physics, true)
-                end
+            if antiRagdollConnection then antiRagdollConnection:Disconnect(); antiRagdollConnection = nil end
+            if antiRagdollStateConnection then antiRagdollStateConnection:Disconnect(); antiRagdollStateConnection = nil end
+            local hum = getHumanoid(getChar())
+            if hum then
+                hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
+                hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+                hum:SetStateEnabled(Enum.HumanoidStateType.Physics, true)
             end
         end
+    end
+})
+
+Tabs.Main:Toggle({
+    Title = "Anti Fall Damage",
+    Description = "Freezes you before hitting the ground at high speed",
+    Callback = function(Value)
+        Settings.AntiFallDamage = Value
+        if Value then
+            setupAntiFallDamage()
+        else
+            if antiFallDamageConnection then antiFallDamageConnection:Disconnect(); antiFallDamageConnection = nil end
+            antiFallIsFrozen = false
+        end
+    end
+})
+
+Tabs.Main:Button({
+    Title = "Load Script TROLL",
+    Description = "Loads NilHub Ragdoll Engine troll script",
+    Callback = function()
+        task.spawn(function()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/12xQ/NilHub.Lua/refs/heads/main/Ragdoll%20Engine"))()
+        end)
     end
 })
 
@@ -369,9 +453,7 @@ Tabs.Visual:Toggle({
     Callback = function(Value)
         Settings.ESP = Value
         if not Value then
-            for player, _ in pairs(espHighlights) do
-                clearESP(player)
-            end
+            for p in pairs(espHighlights) do destroyInstance(espHighlights, p) end
         end
     end
 })
@@ -381,9 +463,7 @@ Tabs.Visual:Toggle({
     Callback = function(Value)
         Settings.NameESP = Value
         if not Value then
-            for player, _ in pairs(espNames) do
-                clearNameESP(player)
-            end
+            for p in pairs(espNames) do destroyInstance(espNames, p) end
         end
     end
 })
@@ -393,9 +473,7 @@ Tabs.Visual:Toggle({
     Callback = function(Value)
         Settings.HealthESP = Value
         if not Value then
-            for player, _ in pairs(espHealth) do
-                clearHealthESP(player)
-            end
+            for p in pairs(espHealth) do destroyInstance(espHealth, p) end
         end
     end
 })
