@@ -259,7 +259,7 @@ end
 
 -- [ UI ]
 u1.AddTheme(u1, { Name = 'Solar', Accent = '#ff9d3a', Outline = '#ffd8a1', Text = '#fff5e0', Background = '#1b120c' })
-local u16 = u1.CreateWindow(u1, { Title = 'Wicik Universal V2', Icon = 'sun', Size = UDim2.fromOffset(450, 520) })
+local u16 = u1.CreateWindow(u1, { Title = 'Classic Duels VOMAGLA', Icon = 'sun', Size = UDim2.fromOffset(450, 520) })
 u16:EditOpenButton({Title = 'Wicik', Draggable = true})
 
 -- MAIN TAB
